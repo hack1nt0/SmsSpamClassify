@@ -1,0 +1,65 @@
+14 B - Super 2048
+12 MULTI_NUMBER
+12 LOCAL_REGEXP
+22 B-(small|large).*[.]in
+6 CUSTOM
+5 b.out
+1
+0
+274 3
+4 right
+2 0 2 4
+2 0 4 2
+2 2 4 8
+2 2 4 4
+10 up
+2 0 0 0 0 0 0 0 0 0
+2 0 0 0 0 0 0 0 0 0
+2 0 0 0 0 0 0 0 0 0
+2 0 0 0 0 0 0 0 0 0
+2 0 0 0 0 0 0 0 0 0
+2 0 0 0 0 0 0 0 0 0
+2 0 0 0 0 0 0 0 0 0
+2 0 0 0 0 0 0 0 0 0
+2 0 0 0 0 0 0 0 0 0
+2 0 0 0 0 0 0 0 0 0
+3 right
+2 2 2
+4 4 4
+8 8 8
+
+277 Case #1:
+0 0 4 4
+0 2 4 2
+0 4 4 8
+0 0 4 8
+Case #2:
+4 0 0 0 0 0 0 0 0 0
+4 0 0 0 0 0 0 0 0 0
+4 0 0 0 0 0 0 0 0 0
+4 0 0 0 0 0 0 0 0 0
+4 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0
+Case #3:
+0 2 4
+0 4 8
+0 8 16
+1
+6 src/TC
+8 -Xmx512M
+4 Main
+8 TC.TaskB
+39 net.egork.chelper.checkers.TokenChecker
+0 
+0
+10 2014.08.28
+60 Google APAC 2015 University Graduates Test Round A APAC Test
+1
+17 java.util.Scanner
+19 java.io.PrintWriter
+1
+0

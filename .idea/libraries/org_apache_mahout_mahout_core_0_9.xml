@@ -1,0 +1,55 @@
+<component name="libraryTable">
+  <library name="org.apache.mahout:mahout-core:0.9" type="repository">
+    <properties maven-id="org.apache.mahout:mahout-core:0.9" />
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/Mahout/mahout-core-0.9.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/Mahout/mahout-math-0.9.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/Mahout/commons-math3-3.2.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/Mahout/guava-16.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/Mahout/slf4j-api-1.7.5.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/Mahout/jackson-core-asl-1.9.12.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/Mahout/jackson-mapper-asl-1.9.12.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/Mahout/commons-logging-1.1.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/Mahout/commons-lang3-3.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/Mahout/xstream-1.4.4.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/Mahout/xmlpull-1.1.3.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/Mahout/xpp3_min-1.1.4c.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/Mahout/lucene-core-4.6.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/Mahout/lucene-analyzers-common-4.6.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/Mahout/commons-cli-2.0-mahout.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/Mahout/solr-commons-csv-3.5.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/Mahout/hadoop-core-1.2.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/Mahout/commons-cli-1.2.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/Mahout/jersey-core-1.8.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/Mahout/jersey-json-1.8.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/Mahout/jettison-1.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/Mahout/stax-api-1.0.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/Mahout/jaxb-impl-2.2.3-1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/Mahout/jaxb-api-2.2.2.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/Mahout/stax-api-1.0-2.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/Mahout/activation-1.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/Mahout/jackson-jaxrs-1.7.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/Mahout/jackson-xc-1.7.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/Mahout/jersey-server-1.8.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/Mahout/asm-3.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/Mahout/commons-io-2.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/Mahout/commons-httpclient-3.0.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/Mahout/commons-codec-1.4.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/Mahout/commons-math-2.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/Mahout/commons-configuration-1.6.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/Mahout/commons-collections-3.2.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/Mahout/commons-lang-2.4.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/Mahout/commons-digester-1.8.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/Mahout/commons-beanutils-1.7.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/Mahout/commons-beanutils-core-1.8.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/Mahout/commons-net-1.4.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/Mahout/commons-el-1.0.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$PROJECT_DIR$/lib/Mahout/mahout-core-0.9-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/lib/Mahout/mahout-core-0.9-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

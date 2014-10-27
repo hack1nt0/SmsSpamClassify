@@ -1,0 +1,50 @@
+12 C - Addition
+12 MULTI_NUMBER
+12 LOCAL_REGEXP
+22 C-(small|large).*[.]in
+6 CUSTOM
+5 c.out
+1
+0
+142 2
+2
+apple+banana=10
+coconut+coconut=12
+5
+apple+banana
+apple+banana
+apple+apple
+banana+apple
+peach+apple
+3
+a+b=3
+b+c=3
+c+d=3
+4
+a+c
+a+d
+b+c
+b+d
+
+77 Case #1:
+apple+banana=10
+apple+banana=10
+banana+apple=10
+Case #2:
+a+d=3
+b+c=3
+1
+6 src/TC
+8 -Xmx512M
+4 Main
+8 TC.TaskC
+39 net.egork.chelper.checkers.TokenChecker
+0 
+0
+10 2014.08.28
+60 Google APAC 2015 University Graduates Test Round A APAC Test
+1
+17 java.util.Scanner
+19 java.io.PrintWriter
+1
+0
