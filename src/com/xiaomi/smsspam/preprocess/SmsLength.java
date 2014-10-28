@@ -84,7 +84,7 @@ public class SmsLength extends RulePrevious {
     @Override
     public boolean fit(Corpus cps, int startIndex) {
         if(curLength >= mDivideLength){
-            cps.getRulesPreHits()[startIndex]++;
+            cps.getRulesPreHits()[startIndex] = 1;
             return true;
         }
         return false;

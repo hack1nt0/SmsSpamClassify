@@ -13,6 +13,7 @@ public class Emoji extends RulePrevious {
     SingleEmoji singleEmoji;
     int singleEmojiN, combEmojiN;
 
+
     class Range implements Comparable<Range> {
         int l, r;
 
@@ -27,7 +28,6 @@ public class Emoji extends RulePrevious {
             return r - o.r;
         }
     }
-
     public Emoji() {
         try {
             singleEmoji = new SingleEmoji();

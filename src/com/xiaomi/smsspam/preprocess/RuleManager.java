@@ -18,7 +18,8 @@ public class RuleManager {
             new Word(),
             //new SpecificSymbol(),
             //new NewPhrase(),
-            //new SmsLength()
+            //new SmsLength(),
+            new Y()
 
     };
     private int[] startIndex;

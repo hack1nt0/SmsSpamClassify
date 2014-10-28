@@ -79,7 +79,7 @@ public class SpecificSymbol extends RulePrevious {
         boolean res = false;
         for (int id: curSymbols) {
             res = true;
-            cps.getRulesPreHits()[startIndex + id]++;
+            cps.getRulesPreHits()[startIndex + id] = 1;
         }
         return res;
     }
