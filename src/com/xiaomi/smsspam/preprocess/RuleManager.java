@@ -2,14 +2,13 @@ package com.xiaomi.smsspam.preprocess;
 
 import com.xiaomi.smsspam.Utils.Corpus;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class RuleManager {
 
     private static int ruleCnt;
-    private ArrayList<String> ruleName;
     private RulePrevious[] ruleObjs = {
+            new Y(),
             new Emoji(),
             new Bracket(),
             new TabsSerial(),
@@ -18,24 +17,10 @@ public class RuleManager {
             new Word(),
             //new SpecificSymbol(),
             //new NewPhrase(),
-            //new SmsLength(),
-            new Y()
-
+            new SmsLength(),
     };
-    private int[] startIndex;
 
     public RuleManager(){
-        ruleName = new ArrayList<String>();
-        ruleCnt = 0;
-        startIndex = new int[ruleObjs.length];
-        for(int i = 0; i < ruleObjs.length; ++i){
-            int subCount = ruleObjs[i].subClassCount();
-            for(int j = 0; j < subCount; ++j){
-                ruleName.add(ruleObjs[i].getClassName(j));
-            }
-            startIndex[i] = ruleCnt;
-            ruleCnt += subCount;
-        }
     }
 
     public RulePrevious[] getRuleObjs() {
@@ -47,33 +32,24 @@ public class RuleManager {
     }
 
     // the rules need to be re-train on the cpss
-    public void process(List<Corpus> cpss){
+    public void train(List<Corpus> cpss){
         for(int i = 0; i < ruleObjs.length; ++i){
             ruleObjs[i].reset();
             ruleObjs[i].train(cpss);
-            for (Corpus cps: cpss) {
-                hasRulesPreHist(cps);
-                //upd segments
-                cps.setRefinedSegments(ruleObjs[i].process(cps.getRefinedSegments()));
-                //upd ruleHits
-                ruleObjs[i].fit(cps, startIndex[i]);
-            }
+            ruleObjs[i].setStartIndex(ruleCnt);
+            ruleCnt += ruleObjs[i].subClassCount();
         }
     }
 
-    private void hasRulesPreHist(Corpus cps) {
-        if (cps.getRulesPreHits() == null) cps.setRulesPreHits(new int[getRuleCnt()]);
-    }
-
-    //no need
     public void process(Corpus cps) {
-        hasRulesPreHist(cps);
-        for(int i = 0; i < ruleObjs.length; ++i){
-            //upd segments
-            cps.setRefinedSegments(ruleObjs[i].process(cps.getRefinedSegments()));
-            //upd ruleHits
-            ruleObjs[i].fit(cps, startIndex[i]);
+        cps.setX(new int[getRuleCnt()]);//TODO
+        for (int i = 0; i < ruleObjs.length; ++i) {
+            ruleObjs[i].process(cps);
         }
+    }
+
+    public void process(List<Corpus> cpss) {
+        for (Corpus cps: cpss) process(cps);
     }
 
 }

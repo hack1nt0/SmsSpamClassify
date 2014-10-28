@@ -40,8 +40,7 @@ public abstract class Rule {
         return name;
     }
 
-    //train the parameters of the rule
-    public abstract void train(List<Corpus> cpss);
+
 
     public abstract String getName();
     public abstract void readDef(DataInputStream dataIn) throws IOException;

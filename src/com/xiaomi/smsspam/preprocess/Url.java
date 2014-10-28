@@ -37,78 +37,54 @@ public class Url extends RulePrevious {
         curUrls.clear();
     }
 
-    @Override
-    public boolean fit(Corpus cps, int startIndex) {
-        if(curUrls.size() > 0){
-            cps.getRulesPreHits()[startIndex] = 1;
-            return true;
-        }
-        return false;
-    }
-
-    protected List<String> process(String str) {
-        Matcher matcher = mPattern.matcher(str);
-        List<String> ret = new ArrayList<String>();
-        int lastEnd = 0;
-        while (matcher.find()){
-            int start = matcher.start();
-            int end = matcher.end();
-            if(start > lastEnd){
-                ret.add(str.substring(lastEnd, start));
-            }
-//            System.out.println("URL:" + str.substring(start, end));
-            curUrls.add(str.substring(start, end));
-            lastEnd = end;
-        }
-        if(lastEnd < str.length() - 1){
-            ret.add(str.substring(lastEnd));
-        }
-
-
+    public void process(Corpus cps) {
         List<String> ret1 = new ArrayList<String>();
-        for(String s : ret){
-            matcher = mPatternIP.matcher(s);
-            lastEnd = 0;
-            while (matcher.find()){
+        for (String line: cps.getRefinedSegments()) {
+            Matcher matcher = mPattern.matcher(line);
+            List<String> ret = new ArrayList<String>();
+            int lastEnd = 0;
+            while (matcher.find()) {
                 int start = matcher.start();
                 int end = matcher.end();
-                if(start > lastEnd){
-                    ret1.add(s.substring(lastEnd, start));
+                if (start > lastEnd) {
+                    ret.add(line.substring(lastEnd, start));
                 }
-//                System.out.println("URL_IP:" + s.substring(start, end));
-                curUrls.add(s.substring(start, end));
+//            System.out.println("URL:" + str.substring(start, end));
+                curUrls.add(line.substring(start, end));
                 lastEnd = end;
             }
-            if(lastEnd < s.length() - 1){
-                ret1.add(s.substring(lastEnd));
+            if (lastEnd < line.length() - 1) {
+                ret.add(line.substring(lastEnd));
+            }
+
+
+            for (String s : ret) {
+                matcher = mPatternIP.matcher(s);
+                lastEnd = 0;
+                while (matcher.find()) {
+                    int start = matcher.start();
+                    int end = matcher.end();
+                    if (start > lastEnd) {
+                        ret1.add(s.substring(lastEnd, start));
+                    }
+//                System.out.println("URL_IP:" + s.substring(start, end));
+                    curUrls.add(s.substring(start, end));
+                    lastEnd = end;
+                }
+                if (lastEnd < s.length() - 1) {
+                    ret1.add(s.substring(lastEnd));
+                }
             }
         }
-        return ret1;
+        cps.setRefinedSegments(ret1);
+        cps.getX()[this.getStartIndex()] = curUrls.size() > 0 ? 1 : 0;
     }
     
-    public static void main1(String[] args) {
+    public static void main(String[] args) {
         String[] strs = {//"积分攒不停，一起分豪礼”活动你还没参加吗？已经累计送出13部华为智能手机、10张超值加油卡和N张话费流量卡咯！后面还有IPhone5、SONY录音笔等豪礼等你拿，兑奖、砸蛋和秒杀！还在等什么？快来参加吧！\thttp://101.227.251.70:8081/ds.jsp?ms=b35000247b35000038a25000051\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t",
                 //"积分攒不停，一起分豪礼”活动你还没参加吗？已经累计送出13部华为智能手机、加吧！\thttp://101.227.251.70:8081/ds.jsp?ms=b35000247b35000038a25000051 三地方看见啊塑料袋分开",
                 "【富阳麻将】网络大赛火热进行中，你来打麻将，我就送话费！参赛就有奖！免费下载www.0571qp.com询4000990330【本地游】",
-
         };
-        
-      Url url = new Url();
-      int count = 0;
-      for(String s :strs){
-          System.out.println("[" + count++ + "]:" + s);
-          List<String> ret = url.process(s);
-          List<String> nms = url.curUrls;
-          System.out.println("------------splits------------");
-          for(String splt : ret){
-              System.out.println(splt);
-          }
-          System.out.println("------------curUrls------------");
-          for(String splt : nms){
-              System.out.println(splt);
-          }
-          System.out.println("===========================================================");
-      }
     }
 
     @Override
@@ -123,21 +99,18 @@ public class Url extends RulePrevious {
 
     @Override
 	public String getName() {
-		// TODO Auto-generated method stub
-		return "Url";
+		return "URL";
 	}
 
 
 	@Override
 	public void readDef(DataInputStream dataIn) throws IOException {
-		// TODO Auto-generated method stub
-		
+
 	}
 
 
 	@Override
 	public void writeDef(DataOutputStream dataOut) throws IOException {
-		// TODO Auto-generated method stub
-		
+
 	}
 }

@@ -211,7 +211,7 @@ public class NewPhrase extends RulePrevious {
             }
             String body = cps.getOriginBody();
 
-            cps.setRefinedBody(body);
+            //cps.setRefinedBody(body);
             boolean[] flags = new boolean[body.length()];
             for(int j = 0; j < body.length(); ++j){
                 //  flags[j] = segment.inDict("" + body.charAt(j));
@@ -294,14 +294,9 @@ public class NewPhrase extends RulePrevious {
     }
 
     @Override
-    public boolean fit(Corpus cps, int startIndex) {
-        return cps.getSegments().addAll(curNewPhrases);
-    }
-
-    @Override
-    protected List<String> process(String str) {
+    public void process(Corpus cps) {
         //TODO
-        return null;
+        //cps.getTokens().addAll(curNewPhrases);
     }
 
     @Override

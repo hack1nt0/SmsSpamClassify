@@ -51,13 +51,6 @@ public class Emoji extends RulePrevious {
     }
 
     @Override
-    public boolean fit(Corpus cps, int startIndex) {
-        if (singleEmojiN > 0) cps.getRulesPreHits()[startIndex + 0] = 1;
-        if (combEmojiN > 0) cps.getRulesPreHits()[startIndex + 1] = 1;
-        return singleEmojiN > 0 || combEmojiN > 0;
-    }
-
-    @Override
     public int subClassCount() {
         return 2;
     }
@@ -68,33 +61,37 @@ public class Emoji extends RulePrevious {
     }
 
     @Override
-    protected List<String> process(String s) {
-        List<String> ret = new ArrayList<>();
+    public void process(Corpus cps) {
+        List<String> nsegs = new ArrayList<>();
+        for (String line : cps.getRefinedSegments()) {
+            Map<String, List<Integer>> ps = singleEmoji.getEmojis(line);
+            List<Range> ranges = new ArrayList<>();
+            for (String pattern : ps.keySet())
+                for (int l : ps.get(pattern)) ranges.add(new Range(l, l + pattern.getBytes().length - 1));
+            singleEmojiN = ranges.size();
+            byte[] bytes = line.getBytes();
+            ranges = disjoin(ranges, bytes.length);
+            StringBuffer sb = new StringBuffer("");
+            for (int i = 0, l = 0; i < ranges.size() && l < bytes.length; l = ranges.get(i).r + 1, ++i) {
+                sb.append(new String(bytes, l, ranges.get(i).l - l));
+            }
+            line = sb.toString();
 
-        Map<String, List<Integer>> ps = singleEmoji.getEmojis(s);
-        List<Range> ranges = new ArrayList<>();
-        for (String pattern : ps.keySet())
-            for (int l : ps.get(pattern)) ranges.add(new Range(l, l + pattern.getBytes().length - 1));
-        singleEmojiN = ranges.size();
-        byte[] bytes = s.getBytes();
-        ranges = disjoin(ranges, bytes.length);
-        StringBuffer sb = new StringBuffer("");
-        for (int i = 0, l = 0; i < ranges.size() && l < bytes.length; l = ranges.get(i).r + 1, ++i) {
-            sb.append(new String(bytes, l, ranges.get(i).l - l));
+            ranges = combEmoji.getEmojis(line);
+            combEmojiN = ranges.size();
+            if (combEmojiN == 0) {
+                nsegs.add(line);
+            }
+            ranges = disjoin(ranges, line.length());
+            for (int i = 0, l = 0; i < ranges.size() && l < line.length(); l = ranges.get(i).r + 1, ++i) {
+                nsegs.add(line.substring(l, ranges.get(i).l));
+            }
         }
-        s = sb.toString();
 
-        ranges = combEmoji.getEmojis(s);
-        combEmojiN = ranges.size();
-        if (combEmojiN == 0) {
-            ret.add(s);
-            return ret;
-        }
-        ranges = disjoin(ranges, s.length());
-        for (int i = 0, l = 0; i < ranges.size() && l < s.length(); l = ranges.get(i).r + 1, ++i) {
-            ret.add(s.substring(l, ranges.get(i).l));
-        }
-        return ret;
+        cps.setRefinedSegments(nsegs);
+
+        cps.getX()[this.getStartIndex() + 0] = singleEmojiN > 0 ? 1 : 0;
+        cps.getX()[this.getStartIndex() + 1] = combEmojiN > 0 ? 1 : 0;
     }
 
     private List<Range> disjoin(List<Range> ranges, int N) {
@@ -156,7 +153,6 @@ public class Emoji extends RulePrevious {
         */
         Emoji emojiRule = new Emoji();
         String t = "你x-D怎么了呀？😂😂😂😂😂😂😂😂😂😂也不说😂";
-        System.out.println(emojiRule.process(t));
     }
 
     class SingleEmoji {

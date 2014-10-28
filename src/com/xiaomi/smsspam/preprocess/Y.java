@@ -20,14 +20,8 @@ public class Y extends RulePrevious {
     }
 
     @Override
-    public boolean fit(Corpus cps, int startIndex) {
-        cps.getRulesPreHits()[startIndex] = cps.getIsSpam() ? 1 : 0;
-        return cps.getIsSpam();
-    }
-
-    @Override
-    protected List<String> process(String str) {
-        return new ArrayList<>(Arrays.asList(str));
+    public void process(Corpus cps) {
+        cps.getX()[0] = cps.getIsSpam() ? 1 : 0;
     }
 
     @Override
@@ -37,7 +31,8 @@ public class Y extends RulePrevious {
 
     @Override
     public void train(List<Corpus> cpss) {
-
+        for (Corpus cps: cpss)
+            cps.getX()[0] = cps.getIsSpam() ? 1 : 0;
     }
 
     @Override

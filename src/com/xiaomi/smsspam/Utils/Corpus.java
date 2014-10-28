@@ -1,52 +1,34 @@
 package com.xiaomi.smsspam.Utils;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 
 public class Corpus{
-    public final static boolean isProceeded = false;
     public final static String BODY = "body";
     public final static String SPAM = "spam";
     public final static String ADDRESS = "address";
-
-    //segments after tokenizer(after some rules such as emoji and url)
-    private List<String> segments;
-
-    //segments after all rules
+    //tokens after tokenizer(after some rules such as emoji and url)
+    private List<String> tokens;
+    //tokens after all rules
     private List<String> refinedSegments;
-
     private String originBody;
-    private String refinedBody;
-
     private boolean isSpam;
-    private int[] rulesPreHits;
-
+    private int[] X;
     private String address;
-    private boolean marked = false;
-    private boolean catalogChanged = false;
-    
-    public boolean getCatChanged() {
-        return catalogChanged;
+
+    public Corpus(String originBody, boolean isSpam, String address) {
+        this.originBody = originBody;
+        this.refinedSegments = new ArrayList<>(Arrays.asList(originBody));
+        this.isSpam = isSpam;
+        this.address = address;
+        this.X = new int[2];
     }
 
-    public void setCatChanged(boolean catChanged) {
-        this.catalogChanged = catChanged;
-    }
-
-    public boolean getMarked() {
-        return marked;
-    }
-
-    public void setMarked(boolean marked) {
-        this.marked = marked;
-    }
-
-    public String getRefinedBody() {
-        return refinedBody;
-    }
-
-    public void setRefinedBody(String cleanBody) {
-        this.refinedBody = cleanBody;
+    public void clear(){
+        tokens = refinedSegments = null;
+        X = null;
     }
 
     public String getAddress() {
@@ -65,20 +47,20 @@ public class Corpus{
         this.originBody = origBody;
     }
 
-    public int[] getRulesPreHits() {
-        return rulesPreHits;
+    public int[] getX() {
+        return X;
     }
 
-    public void setRulesPreHits(int[] preRuleHits) {
-        rulesPreHits = preRuleHits;
+    public void setX(int[] X) {
+        this.X = X;
     }
 
-    public List<String> getSegments(){
-        return segments;
+    public List<String> getTokens(){
+        return tokens;
     }
 
-    public void setSegments(List<String> segs){
-        segments = segs;
+    public void setTokens(List<String> segs){
+        tokens = segs;
     }
 
     public List<String> getRefinedSegments(){
@@ -98,10 +80,6 @@ public class Corpus{
     }
 
     public Corpus clone(){
-        Corpus cps = new Corpus();
-        cps.address = address;
-        cps.isSpam = isSpam;
-        cps.originBody = originBody;
-        return cps;
+        return new Corpus(originBody, isSpam, address);
     }
 }

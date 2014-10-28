@@ -21,12 +21,9 @@ public class Word extends RulePrevious{
 
     private static Tokenizer tokenizer;
 
-    private List<String> tokens;
-
     public Word() {
         tokenizer = new Tokenizer();
         glossary = new HashMap<>();
-        tokens = new ArrayList<>();
     }
 
     public static Tokenizer getSeg(){
@@ -39,25 +36,21 @@ public class Word extends RulePrevious{
 
     @Override
     public void reset() {
-        tokens.clear();
+        glossary.clear();
     }
 
     @Override
-    public boolean fit(Corpus cps, int startIndex) {
-        cps.setSegments(new ArrayList<>(tokens));
-        return cps.getSegments().size() > 0;
-    }
-
-    @Override
-    protected List<String> process(String str) {
-        List<String> res = new ArrayList<>();
-        String[] segs = tokenizer.cut(str);
-        for (String seg : segs) {
-            if (Options.ONLY_DICT_WORD && !tokenizer.inDict(seg)) continue;
-            tokens.add(seg);
-            res.add(seg);
+    public void process(Corpus cps) {
+        List<String> tokens = new ArrayList<>();
+        for (String line: cps.getRefinedSegments()) {
+            String[] segs = tokenizer.cut(line);
+            for (String seg : segs) {
+                if (Options.ONLY_DICT_WORD && !tokenizer.inDict(seg)) continue;
+                tokens.add(seg);
+            }
         }
-        return res;
+        cps.setRefinedSegments(tokens);
+        cps.setTokens(tokens);//TODO
     }
 
     //to tokenize on a whole sms, not applied now

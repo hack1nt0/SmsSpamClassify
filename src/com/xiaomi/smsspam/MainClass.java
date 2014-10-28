@@ -19,34 +19,24 @@ public class MainClass {
     public static List<Corpus> readSMS(String file){
         List<Corpus> allMsm = new ArrayList<Corpus>();
         try {
-            InputStream ins = new FileInputStream(file);
-            BufferedReader br = new BufferedReader(new InputStreamReader(ins));
-            String json;
-
+            BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
             int spamNum = 0;
             int totalNum = 0;
-
-            while((json = br.readLine()) != null){
-                JSONObject object = new JSONObject(json);
-                String body = object.getString(Corpus.BODY);
-                boolean spam = object.getBoolean(Corpus.SPAM);
-                String address = object.getString(Corpus.ADDRESS);
-
+            while(true){
+                String line = in.readLine();
+                if (line == null) break;
+                JSONObject jsonObject = new JSONObject(line);
+                String body = jsonObject.getString(Corpus.BODY);
+                boolean isSpam = jsonObject.getBoolean(Corpus.SPAM);
+                String address = jsonObject.getString(Corpus.ADDRESS);
                 totalNum++;
-                if(spam){
+                if(isSpam){
                     spamNum++;
                 }
-                Corpus cps = new Corpus();
-                cps.setOriginBody(body);
-                cps.setIsSpam(spam);
-                cps.setAddress(address);
-                cps.setRefinedSegments(new ArrayList<String>(Arrays.asList(body)));
-                allMsm.add(cps);
+                allMsm.add(new Corpus(body, isSpam, address));
             }
-
             System.out.println("totalNum:" + totalNum + "\tspamNum:" + spamNum);
-            ins.close();
-            br.close();
+            in.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -54,8 +44,6 @@ public class MainClass {
     }
 
     public static void main(String[] args) {
-        System.out.println(System.getProperty("java.library.path"));
-
         List<Corpus> trainData = readSMS("data/all_processed.txt.dist.filtled");
         //cross validation
         if(Options.TEST_ALG) {
@@ -66,6 +54,7 @@ public class MainClass {
 
         //transfer validation
         RuleManager ruleManager = new RuleManager();
+        ruleManager.train(trainData);
         ruleManager.process(trainData);
         Classifier NB = new NaiveBayes();
         NB.train(trainData);

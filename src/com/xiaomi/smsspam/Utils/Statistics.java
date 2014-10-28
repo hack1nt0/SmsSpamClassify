@@ -29,7 +29,7 @@ public class Statistics {
     public static double getEntropy(List<Corpus> cpss, int... Xs) {
         Map<Long, Double> P = new HashMap<>();
         for (Corpus cps: cpss) {
-            int[] X = cps.getRulesPreHits();
+            int[] X = cps.getX();
             long id = 0;
             for (int i = 0; i < Xs.length; ++i) {
                 if (X[Xs[i]] == 0) continue;

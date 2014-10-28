@@ -62,7 +62,7 @@ public class NaiveBayes01 {
         rmgr.process(new ArrayList<Corpus>());
         List<String> terms = cps.getRefinedSegments();//分词结果
         
-        int[] rules = cps.getRulesPreHits();//规则特征
+        int[] rules = cps.getX();//规则特征
                 
         int result = 0;
         
@@ -117,7 +117,7 @@ public class NaiveBayes01 {
         rmgr.process(tmp);
         List<String> terms = cps.getRefinedSegments();//分词结果
         
-        int[] rules = cps.getRulesPreHits();//规则特征
+        int[] rules = cps.getX();//规则特征
                 
         int result = 0;
         

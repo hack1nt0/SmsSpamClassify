@@ -75,23 +75,16 @@ public class SpecificSymbol extends RulePrevious {
     }
 
     @Override
-    public boolean fit(Corpus cps, int startIndex) {
-        boolean res = false;
+    public void process(Corpus cps) {
+        for (String token: cps.getRefinedSegments()) {
+            for (char c : token.toCharArray()) {
+                if (!symbols.containsKey(c)) continue;
+                curSymbols.add(symbols.get(c));
+            }
+        }
         for (int id: curSymbols) {
-            res = true;
-            cps.getRulesPreHits()[startIndex + id] = 1;
+            cps.getX()[this.getStartIndex() + id] = 1;
         }
-        return res;
-    }
-
-    @Override
-    protected List<String> process(String str) {
-        for (char c: str.toCharArray()) {
-            if (!symbols.containsKey(c)) continue;
-            curSymbols.add(symbols.get(c));
-        }
-        List<String> res = new ArrayList<>(); res.add(str);
-        return res;
     }
 
     @Override

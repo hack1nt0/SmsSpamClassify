@@ -164,18 +164,6 @@ public class Numbers extends RulePrevious {
         }
     }
 
-    @Override
-    public boolean fit(Corpus cps, int startIndex) {
-        boolean flag = false;
-        for(int i = 0; i < mCounts.length; ++i){
-            if(mCounts[i] > 0){
-                flag = true;
-            }
-            cps.getRulesPreHits()[startIndex + i] = mCounts[i];
-        }
-        return flag;
-    }
-
     private static final int MIN_NUMBER_COUNT = 2;
     private static final int RANGE_SECTIONS_COUNT = 2;
 
@@ -324,93 +312,94 @@ public class Numbers extends RulePrevious {
         return f.indexOf(POINT) == f.lastIndexOf(POINT);
     }
 
-    protected List<String> process(String str) {
-        if(null == str){
-            return null;
-        }
-        ArrayList<String> ret = new ArrayList<String>();
-        int startPos = -1, endPos = -1, lastPos = 0;
-        char connector = '0';
-        boolean hasConnector = false;
-        int firstConnectorPos = -1;
+    @Override
+    public void process(Corpus cps) {
+        for (String line: cps.getRefinedSegments()) {
+            ArrayList<String> ret = new ArrayList<String>();
+            int startPos = -1, endPos = -1, lastPos = 0;
+            char connector = '0';
+            boolean hasConnector = false;
+            int firstConnectorPos = -1;
 
-        int numberType = ASCII;
-        
-        boolean hasMark = false;  // POINT(.)  COLON(:：)
-        char mark = POINT;
+            int numberType = ASCII;
+
+            boolean hasMark = false;  // POINT(.)  COLON(:：)
+            char mark = POINT;
 //System.out.println("Body:" + str);
 
-        for(int i = 0; i < str.length(); ++i){
-            char c = str.charAt(i);
-            if(looksLikeNumber(c) && c != SPECIAL_DIGIT){
-                if(startPos < 0){
-                    //if(isRegularNumber(c)){
-                    if(looksLikeArabic(c)){
-                        startPos = i;
-                        numberType = regularType(c);
-                    }else{
-                        continue;
+            for (int i = 0; i < line.length(); ++i) {
+                char c = line.charAt(i);
+                if (looksLikeNumber(c) && c != SPECIAL_DIGIT) {
+                    if (startPos < 0) {
+                        //if(isRegularNumber(c)){
+                        if (looksLikeArabic(c)) {
+                            startPos = i;
+                            numberType = regularType(c);
+                        } else {
+                            continue;
+                        }
                     }
-                }
-                //if(indexOfNumber(c) == numberType){
-                if(looksLikeArabic(c)){
-                    endPos = i;
-                }
-            }else if(startPos >= 0){
-                if(isConnector(c) && !hasConnector){
-                    connector = c;
-                    hasConnector = true;
-                    firstConnectorPos = i;
-                }
-                else if(isMark(c) && !hasMark){
-                    mark = c;
-                    hasMark = true;
-                }
-                else if(c != connector && c != mark){
-                    if(startPos > lastPos){
-                        String subSeg = str.substring(lastPos, startPos);
+                    //if(indexOfNumber(c) == numberType){
+                    if (looksLikeArabic(c)) {
+                        endPos = i;
+                    }
+                } else if (startPos >= 0) {
+                    if (isConnector(c) && !hasConnector) {
+                        connector = c;
+                        hasConnector = true;
+                        firstConnectorPos = i;
+                    } else if (isMark(c) && !hasMark) {
+                        mark = c;
+                        hasMark = true;
+                    } else if (c != connector && c != mark) {
+                        if (startPos > lastPos) {
+                            String subSeg = line.substring(lastPos, startPos);
 //System.out.println("C:" + subSeg);
-                        ret.add(subSeg);
-                    }
+                            ret.add(subSeg);
+                        }
 
-                    String nb = str.substring(startPos, endPos + 1);
+                        String nb = line.substring(startPos, endPos + 1);
 //System.out.println("N:" + nb);
-                    if(hasConnector){
-                        hasConnector = firstConnectorPos < endPos;
-                    }
-                    if(dispose(nb, numberType, hasConnector, connector, hasMark, mark)){
-                        mNumbers.add(new Number(nb));
-                    }
-                    lastPos = endPos + 1;
+                        if (hasConnector) {
+                            hasConnector = firstConnectorPos < endPos;
+                        }
+                        if (dispose(nb, numberType, hasConnector, connector, hasMark, mark)) {
+                            mNumbers.add(new Number(nb));
+                        }
+                        lastPos = endPos + 1;
 
-                    startPos = -1;
-                    hasConnector = false;
-                    numberType = ASCII;
-                    firstConnectorPos = -1;
-                    hasMark = false;
+                        startPos = -1;
+                        hasConnector = false;
+                        numberType = ASCII;
+                        firstConnectorPos = -1;
+                        hasMark = false;
+                    }
                 }
             }
-        }
-        if(startPos >= 0){
-            if(startPos > lastPos){
-                ret.add(str.substring(lastPos, startPos));
+            if (startPos >= 0) {
+                if (startPos > lastPos) {
+                    ret.add(line.substring(lastPos, startPos));
 //System.out.println("C:" + ret.get(ret.size() - 1));
-            }
-            if(endPos + 1 < str.length()){
-                ret.add(str.substring(endPos + 1));
+                }
+                if (endPos + 1 < line.length()) {
+                    ret.add(line.substring(endPos + 1));
 //System.out.println("CC:" + ret.get(ret.size() - 1));
-            }
-            String nb = str.substring(startPos, endPos + 1);
+                }
+                String nb = line.substring(startPos, endPos + 1);
 //System.out.println("N:" + nb);
-            if(dispose(nb, numberType, hasConnector, connector, hasMark, mark)){
-                mNumbers.add(new Number(nb));
-            }
-        }else{
-            ret.add(str.substring(lastPos, str.length()));
+                if (dispose(nb, numberType, hasConnector, connector, hasMark, mark)) {
+                    mNumbers.add(new Number(nb));
+                }
+            } else {
+                ret.add(line.substring(lastPos, line.length()));
 //System.out.println("C:" + ret.get(ret.size() - 1));
-        }
+            }
 //        mProcessed = true;
-        return ret;
+        }
+        //TODO setRefinedSegs
+        for(int i = 0; i < mCounts.length; ++i){
+            cps.getX()[this.getStartIndex() + i] = mCounts[i] > 0 ? 1 : 0;
+        }
     }
 
     protected static int indexOfNumber(char c){

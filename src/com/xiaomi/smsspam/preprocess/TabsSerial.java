@@ -25,24 +25,18 @@ public class TabsSerial extends RulePrevious {
     }
 
     @Override
-    public boolean fit(Corpus cps, int startIndex) {
-        boolean res = false;
-        for (int i = 0; i < REs.length; ++i) {
-            cps.getRulesPreHits()[startIndex + i] = hits[i] > 0 ? 1 : 0;
-            res |= hits[i] > 0;
+    public void process(Corpus cps) {
+        for (String line: cps.getRefinedSegments()) {
+            StringBuffer sb = new StringBuffer("");
+            for (int i = 0; i < REs.length; ++i) {
+                String[] segs = line.split(REs[i]);
+                for (String seg : segs) sb.append(seg);
+                hits[i] += segs.length - 1;
+            }
         }
-        return res;
-    }
-
-    @Override
-    protected List<String> process(String str) {
-        StringBuffer sb = new StringBuffer("");
         for (int i = 0; i < REs.length; ++i) {
-            String[] segs = str.split(REs[i]);
-            for (String seg: segs) sb.append(seg);
-            hits[i] += segs.length - 1;
+            cps.getX()[this.getStartIndex() + i] = hits[i] > 0 ? 1 : 0;
         }
-        return new ArrayList<>(Arrays.asList(sb.toString()));
     }
 
     @Override

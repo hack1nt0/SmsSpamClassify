@@ -1,25 +1,18 @@
 package com.xiaomi.smsspam.preprocess;
 
 import com.xiaomi.smsspam.Utils.Corpus;
-import com.xiaomi.smsspam.Utils.Utils;
+import com.xiaomi.smsspam.Utils.Statistics;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 // Assume the length of spam of SMS is longer than normal
 public class SmsLength extends RulePrevious {
-	
-	List<int[]> mStatics = new ArrayList<int[]>();
-    int mTotal;
-    int mSpamCount;
-    int mDivideLength;
-    int curLength;
-
-    private static final int HIT = 0;
-    private static final int MISS = 1;
+    int len1; //[len0=0, len1, len2=MAXLEN]
 
     @Override
     public int subClassCount() {
@@ -28,73 +21,27 @@ public class SmsLength extends RulePrevious {
 
     @Override
     public void train(List<Corpus> cpss) {
-        mStatics.clear();//TODO
-        for (Corpus cps: cpss) {
-            int len = length(cps);
-            int classId = cps.getIsSpam() ? Utils.SPAM : Utils.NORMAL;
-            while (mStatics.size() < len + 1) {
-                mStatics.add(new int[Utils.CLASS_COUNT]);
-            }
-            mStatics.get(len)[classId]++;
-            mTotal++;
-            if (cps.getIsSpam()) {
-                mSpamCount++;
-            }
+        int MAXLen = 0;
+        for (Corpus cps: cpss) MAXLen = Math.max(getLen(cps), MAXLen);
+        double MAXIG = 0;
+        for (int len = 0; len <= MAXLen; ++len) {
+            for (Corpus cps: cpss) cps.getX()[1] = getLen(cps) <= len ? 0 : 1;
+            double IG = Statistics.getIG(cpss, 1, 0);
+            if (IG > MAXIG) {MAXIG = IG; len1 = len;}
         }
-
-        List<Double> igs = new ArrayList<Double>();
-        double entropySpam = Utils.getEntropy(mTotal, mSpamCount);
-
-        for(int i = 0; i < mStatics.size(); ++i){
-            int[][] counts = new int[Utils.CLASS_COUNT][Utils.CLASS_COUNT];
-            for(int j = 0; j < i; ++j){
-                counts[Utils.NORMAL][HIT] += mStatics.get(j)[Utils.NORMAL];
-                counts[Utils.SPAM][MISS] += mStatics.get(j)[Utils.SPAM];
-            }
-            for(int j = i; j < mStatics.size(); ++j){
-                counts[Utils.SPAM][HIT] += mStatics.get(j)[Utils.SPAM];
-                counts[Utils.NORMAL][MISS] += mStatics.get(j)[Utils.NORMAL];
-            }
-            int lessCount = counts[Utils.NORMAL][HIT] + counts[Utils.SPAM][MISS];
-            int moreCount = counts[Utils.SPAM][HIT] + counts[Utils.NORMAL][MISS];
-            double entropy = entropySpam - (1.0 * lessCount / mTotal) * Utils.getEntropy(lessCount, counts[Utils.NORMAL][HIT])
-                    - (1.0 * moreCount / mTotal) * Utils.getEntropy(moreCount, counts[Utils.SPAM][HIT]);
-            igs.add(entropy);
-        }
-        double maxEntropy = 0.0d;
-        for(int i = 0; i < igs.size(); ++i){
-            if(igs.get(i) > maxEntropy){
-                maxEntropy = igs.get(i);
-                mDivideLength = i;
-            }
-        }
-
-
     }
 
-    private int length(Corpus cps) {
+    private int getLen(Corpus cps) {
         return cps.getOriginBody().length();
     }
 
     @Override
     public void reset() {
-
     }
 
     @Override
-    public boolean fit(Corpus cps, int startIndex) {
-        if(curLength >= mDivideLength){
-            cps.getRulesPreHits()[startIndex] = 1;
-            return true;
-        }
-        return false;
-    }
-
-    @Override
-    protected List<String> process(String str) {
-        curLength = str.length();
-        List<String> res = new ArrayList<>(); res.add(str);
-        return res;
+    public void process(Corpus cps) {
+        cps.getX()[this.getStartIndex()] = getLen(cps) <= len1 ? 0 : 1;
     }
 
     @Override
@@ -105,13 +52,13 @@ public class SmsLength extends RulePrevious {
 
 	@Override
 	public void readDef(DataInputStream dataIn) throws IOException {
-		mDivideLength = dataIn.readInt();
+		len1 = dataIn.readInt();
 	}
 
 
 	@Override
 	public void writeDef(DataOutputStream dataOut) throws IOException {
-		dataOut.writeInt(mDivideLength);
+		dataOut.writeInt(len1);
 		
 	}
 }

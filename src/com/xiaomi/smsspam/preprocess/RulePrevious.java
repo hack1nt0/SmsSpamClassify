@@ -8,21 +8,22 @@ import java.util.List;
 public abstract class RulePrevious extends Rule {
 	
 	protected boolean mHit = false;
+    private int startIndex = 1;
+
+    public int getStartIndex() {
+        return startIndex;
+    }
+
+    public void setStartIndex(int startIndex) {
+        this.startIndex = startIndex;
+    }
 
     public abstract void reset();
 
-    public abstract boolean fit(Corpus cps, int startIndex);
+    public abstract void process(Corpus cps);
 
-    protected abstract List<String> process(String str);
-
-    public List<String> process(List<String> strs){
-        reset();
-        List<String> ret = new ArrayList<String>();
-        for(String s : strs){
-            ret.addAll(process(s));
-        }
-        return ret;
-    }
+    //train the parameters of the rule
+    public abstract void train(List<Corpus> cpss);
 
     @Override
     public String getName() {

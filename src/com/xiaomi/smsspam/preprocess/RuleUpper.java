@@ -25,12 +25,6 @@ public abstract class RuleUpper extends Rule {
     // compute every corpus after RulePrevious, if need
     // It's only should be called on training step.
     protected void doFirstStep(Corpus cps){}
-
-    @Override
-    public void train(List<Corpus> cpss) {
-
-    }
-
     @Override
     public String getName() {
         return null;

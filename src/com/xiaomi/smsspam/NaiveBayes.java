@@ -6,7 +6,6 @@ import com.xiaomi.smsspam.Utils.Utils;
 import com.xiaomi.smsspam.preprocess.RuleManager;
 import com.xiaomi.smsspam.preprocess.Word;
 
-import java.io.*;
 import java.util.*;
 
 public class NaiveBayes extends Classifier{
@@ -24,8 +23,8 @@ public class NaiveBayes extends Classifier{
     //对Copus进行分类，垃圾邮件返回true，否则返回false
 	public boolean classify(Corpus cps)
 	{
-		List<String> terms = cps.getSegments();//分词结果
-		int[] rules = cps.getRulesPreHits();//规则特征
+		List<String> terms = cps.getTokens();//分词结果
+		int[] rules = cps.getX();//规则特征
 
 		//计算短信分别属于两类的概率
 		LongFloat[] probs = new LongFloat[CLASS_COUNT];
@@ -35,7 +34,7 @@ public class NaiveBayes extends Classifier{
 			probs[classNO] = new LongFloat(classPreProbMap[classNO]);
 
 			double multiplier;
-			for(int i = 0; i < cps.getRulesPreHits().length; ++i) {
+			for(int i = 0; i < cps.getX().length; ++i) {
                 multiplier = ruleProbMap[classNO][i];
                 if (rules[i] == 0) {
                     multiplier = 1.0 - multiplier;
@@ -107,18 +106,21 @@ public class NaiveBayes extends Classifier{
         classPreProbMap = new double[CLASS_COUNT];
 
         for (Corpus cps: trainSet) {
-            List<String> terms = cps.getSegments();//分词结果
+            List<String> terms = cps.getTokens();//分词结果
             termSum = new int[CLASS_COUNT];
             int classNO = cps.getIsSpam() ? SPAM : NORMAL;
 
             classPreProbMap[classNO]++;
 
             for (String term : terms) {
+                if (!termID.containsKey(term)) {
+                    throw new RuntimeException("termID is less!");
+                }
                 termProbMap[classNO][termID.get(term)] += 1.0;
                 termSum[classNO]++;
             }
 
-            int[] rules = cps.getRulesPreHits();
+            int[] rules = cps.getX();
             for (int i = 0; i < rules.length; ++i) {
                 ruleProbMap[classNO][i] += rules[i] > 0 ? 1 : 0;
             }
@@ -158,10 +160,7 @@ public class NaiveBayes extends Classifier{
     }
 
     public static void main(String[] args) {
-        Corpus cps = new Corpus();
-        cps.setOriginBody("鑫磊玻璃那处房产抵押给我们了，别开行批了你们没东西押了");
-        NaiveBayes nbc = new NaiveBayes();
-        System.out.println(nbc.classify(cps));
+
     }
 
 }

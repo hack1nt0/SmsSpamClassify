@@ -12,14 +12,13 @@ import java.util.regex.Pattern;
  * Created by root on 14-10-13.
  */
 public class Bracket extends  RulePrevious{
-    private static int MAX_SUBCLASS_NUM;
     private static String RE;
     private static String brackets;
-    private static Set<String> Xs;
+    private static Set<String> xs;
     private static Map<String, Integer> validXs;
 
     public Bracket() {
-        Xs = new HashSet<>();
+        xs = new HashSet<>();
         brackets = "()[]{}<>【】（）《》『』";
         RE = "";
         for (int i = 0; i < brackets.length(); i += 2) {
@@ -36,7 +35,6 @@ public class Bracket extends  RulePrevious{
             for (int id = 0;; ++id) {
                 String line = in.readLine();
                 if (line == null) break;
-                ++MAX_SUBCLASS_NUM;
                 String[] XH = line.split("\t");
                 validXs.put(XH[0], id);
             }
@@ -49,7 +47,7 @@ public class Bracket extends  RulePrevious{
 
     @Override
     public int subClassCount() {
-        return MAX_SUBCLASS_NUM;
+        return validXs.size();
     }
 
     @Override
@@ -84,8 +82,13 @@ public class Bracket extends  RulePrevious{
     }
 
     @Override
+    public void setStartIndex(int startIndex) {
+
+    }
+
+    @Override
     public void reset() {
-        Xs.clear();
+        xs.clear();
     }
 
     //train offline
@@ -140,31 +143,28 @@ public class Bracket extends  RulePrevious{
     }
 
     @Override
-    public boolean fit(Corpus cps, int start) {
-        boolean has = false;
-        for (String x: Xs) {
-            if (!validXs.containsKey(x)) continue;
-            has = true;
-            cps.getRulesPreHits()[start + validXs.get(x)] = 1;
-        }
-        return has;
-    }
-
-    @Override
-    protected List<String> process(String str) {
-        List<String> res = new ArrayList<>();
-        //while (true) {
-            Set<String> Xs = filter(str);
-         //   if (Xs.size() == 0) break;
-            this.Xs.addAll(Xs);
-            for (String x: Xs) {
+    public void process(Corpus cps) {
+        List<String> nsegs = new ArrayList<>();
+        for (int i = 0; i < cps.getRefinedSegments().size(); ++i) {
+            if (0 < i && i < cps.getRefinedSegments().size() - 1) continue;
+            String str = cps.getRefinedSegments().get(i);
+            //while (true) {
+            Set<String> xs = filter(str);
+            //   if (xs.size() == 0) break;
+            this.xs.addAll(xs);
+            for (String x : xs) {
                 if (str.startsWith(x)) str = str.substring(x.length());
                 if (str.endsWith(x)) str = str.substring(0, str.length() - x.length());
             }
-        //}
-        //System.out.println(str);
-        res.add(str);
-        return res;
+            //}
+            //System.out.println(str);
+            nsegs.add(str);
+        }
+        cps.setRefinedSegments(nsegs);
+        for (String x: xs) {
+            if (!validXs.containsKey(x)) continue;
+            cps.getX()[this.getStartIndex() + validXs.get(x)] = 1;
+        }
     }
 
     @Override
