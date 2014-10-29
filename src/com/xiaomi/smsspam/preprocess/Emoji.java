@@ -57,7 +57,34 @@ public class Emoji extends RulePrevious {
 
     @Override
     public void train(List<Corpus> cpss) {
+        for (Corpus cps: cpss) {
+            List<String> nsegs = new ArrayList<>();
+            for (String line : cps.getRefinedSegments()) {
+                Map<String, List<Integer>> ps = singleEmoji.getEmojis(line);
+                List<Range> ranges = new ArrayList<>();
+                for (String pattern : ps.keySet())
+                    for (int l : ps.get(pattern)) ranges.add(new Range(l, l + pattern.getBytes().length - 1));
+                singleEmojiN = ranges.size();
+                byte[] bytes = line.getBytes();
+                ranges = disjoin(ranges, bytes.length); //TODO
+                StringBuffer sb = new StringBuffer("");
+                for (int i = 0, l = 0; i < ranges.size() && l < bytes.length; l = ranges.get(i).r + 1, ++i) {
+                    sb.append(new String(bytes, l, ranges.get(i).l - l));
+                }
+                line = sb.toString();
 
+                ranges = combEmoji.getEmojis(line);
+                combEmojiN = ranges.size();
+                if (combEmojiN == 0) {
+                    nsegs.add(line);
+                }
+                ranges = disjoin(ranges, line.length()); //TODO
+                for (int i = 0, l = 0; i < ranges.size() && l < line.length(); l = ranges.get(i).r + 1, ++i) {
+                    nsegs.add(line.substring(l, ranges.get(i).l));
+                }
+            }
+            cps.setRefinedSegments(nsegs);
+        }
     }
 
     @Override

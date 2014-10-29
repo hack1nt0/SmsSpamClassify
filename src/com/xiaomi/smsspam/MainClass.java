@@ -85,7 +85,7 @@ public class MainClass {
         MainClass.log("Classify");
 
         //save model
-        NB.saveModel("data/NB.model");
+        //NB.saveModel("data/NB.model");
     }
 
     static double[] recalls = new double[Options.THREAD_COUNT];

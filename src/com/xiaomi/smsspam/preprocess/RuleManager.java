@@ -9,13 +9,13 @@ public class RuleManager {
     private static int ruleCnt;
     private RulePrevious[] ruleObjs = {
             new Y(),
-            new Emoji(),
+            //new Emoji(),
             new Bracket(),
-            new TabsSerial(),
+            //new TabsSerial(),
             new Url(),
             new Numbers(),
             new Word(),
-            //new SpecificSymbol(),
+            new SpecificSymbol(),
             //new NewPhrase(),
             new SmsLength(),
     };
@@ -49,7 +49,10 @@ public class RuleManager {
     }
 
     public void process(List<Corpus> cpss) {
-        for (Corpus cps: cpss) process(cps);
+        for (Corpus cps: cpss) {
+            cps.reset();
+            process(cps);
+        }
     }
 
 }

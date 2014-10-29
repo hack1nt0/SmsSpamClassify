@@ -34,7 +34,7 @@ public class NaiveBayes extends Classifier{
 			probs[classNO] = new LongFloat(classPreProbMap[classNO]);
 
 			double multiplier;
-			for(int i = 0; i < cps.getX().length; ++i) {
+			for(int i = 1; i < cps.getX().length; ++i) {
                 multiplier = ruleProbMap[classNO][i];
                 if (rules[i] == 0) {
                     multiplier = 1.0 - multiplier;
@@ -114,7 +114,9 @@ public class NaiveBayes extends Classifier{
 
             for (String term : terms) {
                 if (!termID.containsKey(term)) {
-                    throw new RuntimeException("termID is less!");
+                    //throw new RuntimeException("termID is less!");
+                    System.out.println(term);
+                    continue;
                 }
                 termProbMap[classNO][termID.get(term)] += 1.0;
                 termSum[classNO]++;

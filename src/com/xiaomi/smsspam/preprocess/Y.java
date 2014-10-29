@@ -31,8 +31,6 @@ public class Y extends RulePrevious {
 
     @Override
     public void train(List<Corpus> cpss) {
-        for (Corpus cps: cpss)
-            cps.getX()[0] = cps.getIsSpam() ? 1 : 0;
     }
 
     @Override

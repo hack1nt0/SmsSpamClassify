@@ -58,7 +58,6 @@ public class Bracket extends  RulePrevious{
 
         PrintWriter out1 = new PrintWriter(new ObjectOutputStream(new FileOutputStream("data/brackets_true.txt")));
         PrintWriter out2 = new PrintWriter(new ObjectOutputStream(new FileOutputStream("data/brackets_false.txt")));
-        */
         int head = 0, tail = 0;
         Map<String, Integer> trues = new HashMap<>(); Map<String, Integer> falses = new HashMap<>();
         int tn = 0, fn = 0; // N * M
@@ -78,12 +77,26 @@ public class Bracket extends  RulePrevious{
             if (Math.abs(o2.getValue() - o1.getValue()) < 1e-9) return 0;
             if (o2.getValue() > o1.getValue()) return 1;
             return -1;
-        });
-    }
-
-    @Override
-    public void setStartIndex(int startIndex) {
-
+        });*/
+        for (Corpus cps: cpss) {
+            List<String> nsegs = new ArrayList<>();
+            for (int i = 0; i < cps.getRefinedSegments().size(); ++i) {
+                if (0 < i && i < cps.getRefinedSegments().size() - 1) continue;
+                String str = cps.getRefinedSegments().get(i);
+                //while (true) {
+                Set<String> xs = filter(str);
+                //   if (xs.size() == 0) break;
+                this.xs.addAll(xs);
+                for (String x : xs) {
+                    if (str.startsWith(x)) str = str.substring(x.length());
+                    if (str.endsWith(x)) str = str.substring(0, str.length() - x.length());
+                }
+                //}
+                //System.out.println(str);
+                nsegs.add(str);
+            }
+            cps.setRefinedSegments(nsegs);
+        }
     }
 
     @Override

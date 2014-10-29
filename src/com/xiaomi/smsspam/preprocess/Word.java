@@ -63,14 +63,15 @@ public class Word extends RulePrevious{
     @Override
     public void train(List<Corpus> cpss) {
         for (Corpus cps : cpss) {
-            for (String seg : cps.getRefinedSegments()) {
-                String[] newSegs = tokenizer.cut(seg);
-                for (String nseg : newSegs) {
-                    if (Options.ONLY_DICT_WORD && !tokenizer.inDict(nseg)) continue;
-                    if (!glossary.containsKey(nseg)) glossary.put(nseg, glossary.size());
+            for (String line : cps.getRefinedSegments()) {
+                String[] segs = tokenizer.cut(line);
+                for (String seg : segs) {
+                    if (Options.ONLY_DICT_WORD && !tokenizer.inDict(seg)) continue;
+                    if (!glossary.containsKey(seg)) glossary.put(seg, glossary.size());
                 }
             }
         }
+
     }
 
     @Override

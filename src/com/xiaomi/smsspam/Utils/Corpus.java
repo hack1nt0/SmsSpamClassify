@@ -26,6 +26,11 @@ public class Corpus{
         this.X = new int[2];
     }
 
+    public void reset() {
+        this.refinedSegments = new ArrayList<String>(Arrays.asList(originBody));
+        this.tokens = null;
+    }
+
     public void clear(){
         tokens = refinedSegments = null;
         X = null;

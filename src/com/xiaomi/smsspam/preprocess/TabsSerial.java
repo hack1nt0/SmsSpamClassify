@@ -15,7 +15,7 @@ public class TabsSerial extends RulePrevious {
     private int[] hits;
 
     public TabsSerial() {
-        REs = new String[]{"( ){3,}", "(\\\\*[\tt]){1}", "(\\\\*[\tt]){2,}", "(\\\\*[\n\rrn]){1,}"};
+        REs = new String[]{"( ){3,}", "(\\\\*[\tt]){1}", /*"(\\\\*[\tt]){2,}", "(\\\\*[\n\rrn]){1,}"*/};
         hits = new int[REs.length];
     }
 
@@ -26,14 +26,16 @@ public class TabsSerial extends RulePrevious {
 
     @Override
     public void process(Corpus cps) {
-        for (String line: cps.getRefinedSegments()) {
-            StringBuffer sb = new StringBuffer("");
-            for (int i = 0; i < REs.length; ++i) {
+        for (int i = 0; i < REs.length; ++i) {
+            List<String> nsegs = new ArrayList<>();
+            for (String line: cps.getRefinedSegments()) {
                 String[] segs = line.split(REs[i]);
-                for (String seg : segs) sb.append(seg);
+                nsegs.addAll(Arrays.asList(segs));
                 hits[i] += segs.length - 1;
             }
+            cps.setRefinedSegments(nsegs);
         }
+
         for (int i = 0; i < REs.length; ++i) {
             cps.getX()[this.getStartIndex() + i] = hits[i] > 0 ? 1 : 0;
         }
@@ -46,8 +48,20 @@ public class TabsSerial extends RulePrevious {
 
     @Override
     public void train(List<Corpus> cpss) {
+        /*
         for (int S = 0; S < 1<<REs.length; ++S) {
             //TODO find the optimistic S
+        }*/
+        for (Corpus cps: cpss) {
+            for (int i = 0; i < REs.length; ++i) {
+                List<String> nsegs = new ArrayList<>();
+                for (String line : cps.getRefinedSegments()) {
+                    String[] segs = line.split(REs[i]);
+                    nsegs.addAll(Arrays.asList(segs));
+                    hits[i] += segs.length - 1;
+                }
+                cps.setRefinedSegments(nsegs);
+            }
         }
     }
 
