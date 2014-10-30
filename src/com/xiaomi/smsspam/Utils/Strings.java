@@ -1,5 +1,7 @@
 package com.xiaomi.smsspam.Utils;
 
+import org.omg.Messaging.SYNC_WITH_TRANSPORT;
+
 import java.io.*;
 import java.util.*;
 
@@ -70,21 +72,15 @@ public class Strings {
             cur.patternId = index;
         }
 
-        public boolean isExist(String s) {
-            Node cur = root;
-            for (int i = 0; i < s.length(); ++i) {
-                char c = s.charAt(i);
-                if (!cur.childs.containsKey(c)) return false;
-                cur = cur.childs.get(c);
+        public List<int[]> match(String text, int startIndex) {
+            if (text.length() <= startIndex || startIndex < 0) {
+                return null;
             }
-            return cur.type == 1;
-        }
 
-        public List<int[]> match(String text) {
             List<int[]> ret = new ArrayList<>();
             Node cur = root;
 
-            for (int i = 0; i < text.length(); ++i) {
+            for (int i = startIndex; i < text.length(); ++i) {
                 char c = text.charAt(i);
                 while (!cur.isRoot() && !cur.childs.containsKey(c)) cur = cur.fail;
                 if (cur.childs.containsKey(c)) cur = cur.childs.get(c);
@@ -98,7 +94,8 @@ public class Strings {
         }
 
         //to left only the ones without both children and parent
-        public List<int[]> filter(List<int[]> tri) {
+        public List<int[]> filterNoOverlay(List<int[]> tri) {
+            if (tri.size() == 0) return null;
             //if (patterns.size() == 1) return findSingle(text, patterns.get(0));
             List<int[]> res = new ArrayList<>();
             Collections.sort(tri, new Comparator<int[]>() {
@@ -116,31 +113,104 @@ public class Strings {
             return res;
         }
 
+        //to left the left-most ones
+        public List<int[]> filterLeftMost(List<int[]> tri) {
+            if (tri.size() == 0) return null;
+            //if (patterns.size() == 1) return findSingle(text, patterns.get(0));
+            List<int[]> res = new ArrayList<>();
+
+            for (int i = 0, LM = Integer.MAX_VALUE; i < tri.size(); ++i) {
+                int curL = tri.get(i)[1];
+                if (LM < curL) continue;
+                if (curL < LM) res.clear();
+                LM = Math.min(curL, LM);
+                res.add(tri.get(i));
+            }
+            return res;
+        }
+
+        public int[] filterLongest(List<int[]> tri) {
+            if (tri.size() == 0) return null;
+            int longestI = 0;
+            for (int i = 0; i < tri.size(); ++i) {
+                int curL = tri.get(i)[2] - tri.get(i)[1] + 1;
+                int maxL = tri.get(longestI)[2] - tri.get(longestI)[1] + 1;
+                if (curL <= maxL) continue;
+                curL = maxL;
+                longestI = i;
+            }
+            return tri.get(longestI);
+        }
+
         public List<int[]> find(String text) {
-            return filter(match(text));
+            return filterNoOverlay(match(text, 0));
+        }
+
+        //跟原先的功能一样，但是是从index位置开始找
+        List<int[]> find(String text, int startIndex) {
+            return filterNoOverlay(match(text, startIndex));
+        }
+
+
+        //返回最早出现在词典中的词（最长。例如Dic={"ab","bc","bcd","cde"}；​findFirst("abcdefg",1)​返回{"bcd"}）
+        int[] findFirst(String text, int startIndex) {
+            return filterLongest(findFirstAll(text, startIndex));
+        }
+
+
+        //返回最早出现在词典中的词（所有。例如Dic={"ab","bc","bcd","cde"}；findFirstAll("abcdefg",1)返回{"bc","bcd"}）
+        List<int[]> findFirstAll(String text, int startIndex) {
+            return filterLeftMost(match(text, startIndex));
+        }
+
+
+        //判断word是否是词典中的词（例如Dic={"ab","bc","bcd","cde"}；contain("abcdefg")返回false；contain("cde"​)返回true）
+        int contains(String word) {
+            Node cur = root;
+            for (int i = 0; i < word.length(); ++i) {
+                char c = word.charAt(i);
+                if (!cur.childs.containsKey(c)) return -1;
+                cur = cur.childs.get(c);
+            }
+            return cur.type == 1 ? cur.patternId : -1;
         }
     }
 
     public static void main(String[] args) throws IOException {
-        BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream("data/bankNames.txt")));
         List<String> patterns = new ArrayList<>();
-        while (true) {
-            String line = in.readLine();
-            if (line == null) break;
-            patterns.add(line);
-        }
+        patterns.add("bc");
+        patterns.add("b");
+        patterns.add("def");
+        patterns.add("e");
+        patterns.add("ef");
+        String text = "abcdef";
 
-        patterns.add("交通银行");
-        patterns.add("银行");
-        patterns.add("交通");
-        patterns.add("通");
-        patterns.add("银行信用");
-
-        String text = "动动手指，得5000积分！9月30日前用交通银行信用卡主卡注册客户端手机银行并完成首次登录可获赠5000积交通银行分，每位客户奖励仅限一次。手机访问wap.95559.com.cn/dl 下载\\u201c交通银行\\u201d客户端。注册流程见信用卡网站\\u201c电子银行\\u201d。[交通银行卡中心]​";
         ACAutomation acAutomation = (new Strings()).new ACAutomation(patterns);
         List<int[]> startIndexes = acAutomation.find(text);
         for (int[] p: startIndexes) {
             System.out.println(patterns.get(p[0]) + ": [" + p[1] + ", " + p[2] + "]");
         }
+        System.out.println();
+
+        startIndexes = acAutomation.find(text, 4);
+        for (int[] p: startIndexes) {
+            System.out.println(patterns.get(p[0]) + ": [" + p[1] + ", " + p[2] + "]");
+        }
+        System.out.println();
+
+        startIndexes = acAutomation.findFirstAll(text, 0);
+        for (int[] p: startIndexes) {
+            System.out.println(patterns.get(p[0]) + ": [" + p[1] + ", " + p[2] + "]");
+        }
+        System.out.println();
+
+        startIndexes = new ArrayList<int[]>(){{add(acAutomation.findFirst(text, 0));}};
+        for (int[] p: startIndexes) {
+            System.out.println(patterns.get(p[0]) + ": [" + p[1] + ", " + p[2] + "]");
+        }
+        System.out.println();
+
+        System.out.println(acAutomation.contains(patterns.get(0)));
+        System.out.println(acAutomation.contains(patterns.get(0) + "23"));
     }
 }

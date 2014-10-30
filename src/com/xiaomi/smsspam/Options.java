@@ -8,6 +8,9 @@ public class Options {
     public static final String FilePath = "/home/wangsirui/workspace/merged_2_C_C_C .json";
 
     public static final int CROSS_COUNT = 10;
+
+    public static final boolean PRINT_CUR_RULES = true;
+
     static final int COUNT = 8;
     static final int THREAD_COUNT = 8;
 
@@ -40,8 +43,7 @@ public class Options {
     
     public static final String MODEL_FILE_PATH = "/home/wangsirui/workspace/model";
     
-    public static final String PREPROCESS_PACKAGE = "com.xiaomi.smsspam.preprocess";
-    
+
     public static final String ORIGIN_DICT = "/home/wangsirui/workspace/jieba.dict.utf8";
     
     public static final String NEW_DICT = "/home/wangsirui/workspace/newdict";

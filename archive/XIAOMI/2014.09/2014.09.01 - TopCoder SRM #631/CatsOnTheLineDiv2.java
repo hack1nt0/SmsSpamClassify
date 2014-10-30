@@ -33,7 +33,7 @@ public class CatsOnTheLineDiv2 {
                 int rn = count[sp] - ln - 1;
                 int lt = sp == 0 ? ln : calT(ln, position[sp - 1], position[sp], dl[sp - 1]);
                 int rt = sp == N - 1 ? rn : calT(rn, position[sp], position[sp + 1], dr[sp + 1]);
-                System.out.println(Math.max(lt, rt));
+                System.modelOut.println(Math.max(lt, rt));
                 if (Math.max(lt, rt) <= time)
                     return "Possible";
             }

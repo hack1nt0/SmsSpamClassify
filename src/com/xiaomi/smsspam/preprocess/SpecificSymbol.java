@@ -12,7 +12,7 @@ public class SpecificSymbol extends RulePrevious {
 	
 	private int[][] mStatics = new int[Character.MAX_VALUE + 1][Utils.CLASS_COUNT];
     private Map<Character, Integer> symbols = new HashMap<>();
-    private List<Integer> curSymbols = new ArrayList<>();
+    private List<Character> curSymbols = new ArrayList<>();
     int mTotal;
     int mSpamCount;
     private static final double MIN_IG = 0.004;
@@ -39,7 +39,7 @@ public class SpecificSymbol extends RulePrevious {
         for (Corpus cps: cpss) {
             int classId = cps.getIsSpam() ? Utils.SPAM : Utils.NORMAL;
             Set<Character> alphabet = new HashSet<>();
-            for (char c : cps.getOriginBody().toCharArray()) alphabet.add(c);
+            for (char c : cps.getOriginalBody().toCharArray()) alphabet.add(c);
             for (char c : alphabet) mStatics[c][classId]++;
             mTotal++;
             if (cps.getIsSpam()) {
@@ -66,7 +66,7 @@ public class SpecificSymbol extends RulePrevious {
                 maxIg.add(igs[i]);
             }
         }
-
+        writeCurRules(modelOut, symbols.keySet());
     }
 
     @Override
@@ -75,16 +75,23 @@ public class SpecificSymbol extends RulePrevious {
     }
 
     @Override
+    public void updRemainingBody(Corpus cps) {
+
+    }
+
+    @Override
     public void process(Corpus cps) {
-        for (String token: cps.getRefinedSegments()) {
+        for (String token: cps.getRemainingBody()) {
             for (char c : token.toCharArray()) {
                 if (!symbols.containsKey(c)) continue;
-                curSymbols.add(symbols.get(c));
+                curSymbols.add(c);
             }
         }
-        for (int id: curSymbols) {
-            cps.getX()[this.getStartIndex() + id] = 1;
+        writeCurRules(extractedRulesOut, curSymbols);
+        for (char c: curSymbols) {
+            cps.getX()[this.getStartIndex() + symbols.get(c)] = 1;
         }
+
     }
 
     @Override

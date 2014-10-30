@@ -6,8 +6,6 @@ import com.xiaomi.smsspam.Utils.Statistics;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 // Assume the length of spam of SMS is longer than normal
@@ -32,11 +30,16 @@ public class SmsLength extends RulePrevious {
     }
 
     private int getLen(Corpus cps) {
-        return cps.getOriginBody().length();
+        return cps.getOriginalBody().length();
     }
 
     @Override
     public void reset() {
+    }
+
+    @Override
+    public void updRemainingBody(Corpus cps) {
+
     }
 
     @Override

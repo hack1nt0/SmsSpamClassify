@@ -59,7 +59,7 @@ public class NewPhrase extends RulePrevious {
     public void checkSubWord(List<Integer> ids, List<String> phs){
         int removedCount = 0;
         if(!Options.TEST_ALG){
-//            System.out.println("Totally Count:" + getPhraseCount());
+//            System.modelOut.println("Totally Count:" + getPhraseCount());
         }
         for(Map<String, PairCount> map : mFilteredPhrases){
             Set<String> toRemove = new HashSet<String>();
@@ -77,16 +77,16 @@ public class NewPhrase extends RulePrevious {
             }
         }
 /*        if(!Options.TEST_ALG){
-            System.out.println("removed:" + removedCount);
+            System.modelOut.println("removed:" + removedCount);
             int leftCount = 0;
             for(Map<String, PairCount> map : mFilteredPhrases){
                 Iterator<Map.Entry<String, PairCount>> it = map.entrySet().iterator();
                 while(it.hasNext()){
-                    System.out.println("Left phrase::" + it.next().getKey());
+                    System.modelOut.println("Left phrase::" + it.next().getKey());
                     leftCount++;
                 }
             }
-            System.out.println("leftCount:" + leftCount);
+            System.modelOut.println("leftCount:" + leftCount);
         }*/
     }
 
@@ -147,7 +147,7 @@ public class NewPhrase extends RulePrevious {
                         PairCount pc = entry.getValue();
                         if(phrs.indexOf(key) != -1){
                             if(canRemoveChild(vals, pc.vals)){
-//                                System.out.println(phrs + ":" + vals[0] + ",\t" + vals[1] + "\t\t"
+//                                System.modelOut.println(phrs + ":" + vals[0] + ",\t" + vals[1] + "\t\t"
 //                                            + key + ":" + pc.vals[0] + ",\t" + pc.vals[1] + "\t Removed");
                                 toRemove.add(key);
                                 pc.dup = true;
@@ -167,13 +167,13 @@ public class NewPhrase extends RulePrevious {
             for(int i = filteredPhrases.length - 1; i >= 0; --i){
                 Map<String, PairCount> map = filteredPhrases[i];
                 Iterator<Map.Entry<String, PairCount>> it = map.entrySet().iterator();
-//                System.out.println("--------------------------------------" + PHRASE_LENGTH[i]);
+//                System.modelOut.println("--------------------------------------" + PHRASE_LENGTH[i]);
 
                 while(it.hasNext()){
                     Map.Entry<String, PairCount> entry = it.next();
                     String key = entry.getKey();
                     PairCount pc = entry.getValue();
-//                    System.out.println(key + ":" + pc.vals[0] + ",\t" + pc.vals[1]);
+//                    System.modelOut.println(key + ":" + pc.vals[0] + ",\t" + pc.vals[1]);
                     totalCount++;
                 }
             }
@@ -209,7 +209,7 @@ public class NewPhrase extends RulePrevious {
             if(cps.getIsSpam()){
                 spamCount++;
             }
-            String body = cps.getOriginBody();
+            String body = cps.getOriginalBody();
 
             //cps.setRefinedBody(body);
             boolean[] flags = new boolean[body.length()];
@@ -228,7 +228,7 @@ public class NewPhrase extends RulePrevious {
                         serialCount = 0;
                     }
                     if(serialCount == PHRASE_LENGTH[ii]){
-                        //System.out.println(body + ",\t" + "j:" + j + ",\tPHRASE_LENGTH[ii]:"  + PHRASE_LENGTH[ii]);
+                        //System.modelOut.println(body + ",\t" + "j:" + j + ",\tPHRASE_LENGTH[ii]:"  + PHRASE_LENGTH[ii]);
                         String phrase = body.substring(j - PHRASE_LENGTH[ii] + 1, j + 1);
                         if(!phrases.contains(phrase) && !tokenizer.inDict(phrase)){
                             phrases.add(phrase);
@@ -239,7 +239,7 @@ public class NewPhrase extends RulePrevious {
                 for(String phs : phrases){
                     if(!mPhrase[ii].containsKey(phs)){
                         mPhrase[ii].put(phs, new int[]{0, 0});
-                        //System.out.println("Add new phrase: " + phs);
+                        //System.modelOut.println("Add new phrase: " + phs);
                     }
                     mPhrase[ii].get(phs)[cps.getIsSpam() ? Options.SPAM : Options.NORMAL]++;
                 }
@@ -291,6 +291,11 @@ public class NewPhrase extends RulePrevious {
     @Override
     public void reset() {
         curNewPhrases.clear();
+    }
+
+    @Override
+    public void updRemainingBody(Corpus cps) {
+
     }
 
     @Override

@@ -1,13 +1,18 @@
 package com.xiaomi.smsspam.preprocess;
 
+import com.xiaomi.smsspam.Options;
 import com.xiaomi.smsspam.Utils.Corpus;
 
-import java.util.ArrayList;
+import java.io.*;
+import java.util.Collection;
 import java.util.List;
 
 public abstract class RulePrevious extends Rule {
 	
-	protected boolean mHit = false;
+    protected BufferedWriter modelOut;
+    protected BufferedWriter extractedRulesOut;
+    protected BufferedReader modelIn;
+
     private int startIndex = 1;
 
     public int getStartIndex() {
@@ -19,6 +24,17 @@ public abstract class RulePrevious extends Rule {
     }
 
     public abstract void reset();
+
+    public abstract void updRemainingBody(Corpus cps);
+
+    public void writeCurRules(BufferedWriter out, Collection curRules) {
+        if (!Options.PRINT_CUR_RULES) return;
+        try {
+            out.write(curRules + "\n");
+        }catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     public abstract void process(Corpus cps);
 

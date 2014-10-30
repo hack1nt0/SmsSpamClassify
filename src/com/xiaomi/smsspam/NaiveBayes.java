@@ -135,8 +135,8 @@ public class NaiveBayes extends Classifier{
                 assert tmp == 0;
                 /*
                 if (tmp == 0) {
-                    System.out.println("(termProbMap[j][i] + 1) / (termSum[j] + Options.V)");
-                    System.out.println(termProbMap[j][i] + " " + termSum[j] + " " + (termDict.size() + 1));
+                    System.modelOut.println("(termProbMap[j][i] + 1) / (termSum[j] + Options.V)");
+                    System.modelOut.println(termProbMap[j][i] + " " + termSum[j] + " " + (termDict.size() + 1));
                 }*/
                 termProbMap[i][j] = tmp;
             }
@@ -149,8 +149,8 @@ public class NaiveBayes extends Classifier{
                 assert tmp >= 1;
                 /*
                 if (tmp > 1) {
-                    System.out.println("(ruleProbMap[i][j] + 1) / (classPreProbMap[i] + 2)");
-                    System.out.println(ruleProbMap[i][j] + " " + classPreProbMap[i]);
+                    System.modelOut.println("(ruleProbMap[i][j] + 1) / (classPreProbMap[i] + 2)");
+                    System.modelOut.println(ruleProbMap[i][j] + " " + classPreProbMap[i]);
                 }*/
                 ruleProbMap[i][j] = tmp;
             }

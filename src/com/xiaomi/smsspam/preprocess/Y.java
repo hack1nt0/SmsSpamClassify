@@ -20,6 +20,11 @@ public class Y extends RulePrevious {
     }
 
     @Override
+    public void updRemainingBody(Corpus cps) {
+
+    }
+
+    @Override
     public void process(Corpus cps) {
         cps.getX()[0] = cps.getIsSpam() ? 1 : 0;
     }

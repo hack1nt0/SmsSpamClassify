@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="SMSNER">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/NER/SMSNER.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/lib/NER/SMSNER.jar!/" />
+    </SOURCES>
+  </library>
+</component>

@@ -10,12 +10,12 @@ public class RuleManager {
     private RulePrevious[] ruleObjs = {
             new Y(),
             //new Emoji(),
-            new Bracket(),
-            //new TabsSerial(),
+            //new Bracket(),
+            new Splits(),
             new Url(),
-            new Numbers(),
+            //new Numbers(),
             new Word(),
-            new SpecificSymbol(),
+            //new SpecificSymbol(),
             //new NewPhrase(),
             new SmsLength(),
     };

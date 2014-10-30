@@ -164,6 +164,11 @@ public class Numbers extends RulePrevious {
         }
     }
 
+    @Override
+    public void updRemainingBody(Corpus cps) {
+
+    }
+
     private static final int MIN_NUMBER_COUNT = 2;
     private static final int RANGE_SECTIONS_COUNT = 2;
 
@@ -173,7 +178,7 @@ public class Numbers extends RulePrevious {
         }
         int pure = isPureType(n) ? PURE : CONFUSION;
 //if(PURE != pure){
-//    System.out.println("not pure:" + n);
+//    System.modelOut.println("not pure:" + n);
 //}
         int classId = -1;
         ArrayList<String> sections = new ArrayList<String>();
@@ -208,7 +213,7 @@ public class Numbers extends RulePrevious {
                         (sections.get(1).length() == 7 || sections.get(1).length() == 8)){   // length of code == 7/8
                     //classId = PHONE_AREA;
                 	classId = dNames.indexOf("PhoneArea");
-//                    System.out.println("PHONE_AREA:" + n);
+//                    System.modelOut.println("PHONE_AREA:" + n);
                 }else {
                     String s0 = sections.get(0);
                     String s1 = sections.get(1);
@@ -222,11 +227,11 @@ public class Numbers extends RulePrevious {
                         if(sections.get(0).equals("400") && s1.length() == 7 && !hasMark){
                             //classId = PHONE_400;
                         	classId = dNames.indexOf("Phone400");
-//                            System.out.println("PHONE_400:" + n);
+//                            System.modelOut.println("PHONE_400:" + n);
                         }else{
                             //classId = RANGE;
                         	classId = dNames.indexOf("Range");
-//                            System.out.println("RANGE:" + n);
+//                            System.modelOut.println("RANGE:" + n);
                         }
                     }
                 }
@@ -241,27 +246,27 @@ public class Numbers extends RulePrevious {
                 sb.append(s.replaceAll("\\.", ""));
             }
             String pureN = sb.toString();
-    //        System.out.println("pureN:" + pureN);
+    //        System.modelOut.println("pureN:" + pureN);
     
             int count = pureN.length();
             if(count > 19){
                 //classId = LONG;
             	classId = dNames.indexOf("Long");
-//                System.out.println("LONG:" + n);
+//                System.modelOut.println("LONG:" + n);
             }else if(count >= 15){ // BankCard
                 if(BANK_CARD_FIRST.indexOf(pureN.charAt(0)) != -1 && !(hasMark && hasConnector)){
                     //classId = BANK_CARD;
                 	classId = dNames.indexOf("BankCard");
-//                    System.out.println("BANK_CARD:" + n);
+//                    System.modelOut.println("BANK_CARD:" + n);
                 }else{
                     //classId = OTHER;
                 	classId = dNames.indexOf("Other");
-//                    System.out.println("BANK_CARD_OTHER:" + n);
+//                    System.modelOut.println("BANK_CARD_OTHER:" + n);
                 }
             }else if(count > 12){
                 //classId = LONG;
             	classId = dNames.indexOf("Long");
-//                System.out.println("LONG:" + n);
+//                System.modelOut.println("LONG:" + n);
             }else if(count >= 11){ // phone with area code, or mobile phone
                 if(pureN.charAt(0) == NUMBERS_ASCII.charAt(0)){
                     //classId = PHONE_AREA;
@@ -270,7 +275,7 @@ public class Numbers extends RulePrevious {
                 if(count == 11 && pureN.charAt(0) == NUMBERS_ASCII.charAt(1)){
                    // classId = PHONE_MOBILE;
                 	classId = dNames.indexOf("PhoneMobile");
-//                    System.out.println("PHONE_MOBILE:" + n);
+//                    System.modelOut.println("PHONE_MOBILE:" + n);
                 }
             }else if(count == 10){ // 400 phone
                 if("400".equals(pureN.substring(0, 3))){
@@ -280,11 +285,11 @@ public class Numbers extends RulePrevious {
             }else if(sections.size() == 1 && hasMark && COLONS.indexOf(mark) != -1){
                 //classId = TIME;
             	classId = dNames.indexOf("Time");
-//                System.out.println("TIME:" + n);
+//                System.modelOut.println("TIME:" + n);
             }else if(!hasMark && !hasConnector && pureN.charAt(0) > '1' && (count == 7 || count == 8)){
                 //classId = PHONE;
             	classId = dNames.indexOf("Phone");
-//                System.out.println("PHONE:" + n);
+//                System.modelOut.println("PHONE:" + n);
             }else{
                 //classId = OTHER;
             	classId = dNames.indexOf("Other");
@@ -299,7 +304,7 @@ public class Numbers extends RulePrevious {
             mCounts[classId]++;
             return true;
         }else{
-//            System.out.println("DROP NUMBER:" + n);
+//            System.modelOut.println("DROP NUMBER:" + n);
         }
         return false;
 
@@ -314,7 +319,7 @@ public class Numbers extends RulePrevious {
 
     @Override
     public void process(Corpus cps) {
-        for (String line: cps.getRefinedSegments()) {
+        for (String line: cps.getRemainingBody()) {
             ArrayList<String> ret = new ArrayList<String>();
             int startPos = -1, endPos = -1, lastPos = 0;
             char connector = '0';
@@ -325,7 +330,7 @@ public class Numbers extends RulePrevious {
 
             boolean hasMark = false;  // POINT(.)  COLON(:：)
             char mark = POINT;
-//System.out.println("Body:" + str);
+//System.modelOut.println("Body:" + str);
 
             for (int i = 0; i < line.length(); ++i) {
                 char c = line.charAt(i);
@@ -354,12 +359,12 @@ public class Numbers extends RulePrevious {
                     } else if (c != connector && c != mark) {
                         if (startPos > lastPos) {
                             String subSeg = line.substring(lastPos, startPos);
-//System.out.println("C:" + subSeg);
+//System.modelOut.println("C:" + subSeg);
                             ret.add(subSeg);
                         }
 
                         String nb = line.substring(startPos, endPos + 1);
-//System.out.println("N:" + nb);
+//System.modelOut.println("N:" + nb);
                         if (hasConnector) {
                             hasConnector = firstConnectorPos < endPos;
                         }
@@ -379,20 +384,20 @@ public class Numbers extends RulePrevious {
             if (startPos >= 0) {
                 if (startPos > lastPos) {
                     ret.add(line.substring(lastPos, startPos));
-//System.out.println("C:" + ret.get(ret.size() - 1));
+//System.modelOut.println("C:" + ret.get(ret.size() - 1));
                 }
                 if (endPos + 1 < line.length()) {
                     ret.add(line.substring(endPos + 1));
-//System.out.println("CC:" + ret.get(ret.size() - 1));
+//System.modelOut.println("CC:" + ret.get(ret.size() - 1));
                 }
                 String nb = line.substring(startPos, endPos + 1);
-//System.out.println("N:" + nb);
+//System.modelOut.println("N:" + nb);
                 if (dispose(nb, numberType, hasConnector, connector, hasMark, mark)) {
                     mNumbers.add(new Number(nb));
                 }
             } else {
                 ret.add(line.substring(lastPos, line.length()));
-//System.out.println("C:" + ret.get(ret.size() - 1));
+//System.modelOut.println("C:" + ret.get(ret.size() - 1));
             }
 //        mProcessed = true;
         }

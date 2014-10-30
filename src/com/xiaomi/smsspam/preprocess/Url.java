@@ -1,8 +1,8 @@
 package com.xiaomi.smsspam.preprocess;
 
+import com.xiaomi.smsspam.Options;
 import com.xiaomi.smsspam.Utils.Corpus;
 
-import java.awt.image.BufferedImage;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,9 +26,19 @@ public class Url extends RulePrevious {
     private static String URL;
 
     private Pattern mPattern;
-    private List<String> curUrls = new ArrayList<String>();
+    private List<String> URLs;
+    private List<String> curURLs;
 
     public Url(){
+        curURLs = new ArrayList<>();
+        URLs = new ArrayList<>();
+        try {
+            extractedRulesOut = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("data/extractedURLs.txt")));
+            modelOut = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("data/validURLs.txt")));
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
         String topLevelDomain = "(\\.(aero|" +
                 "arpa|" +
@@ -69,13 +79,16 @@ public class Url extends RulePrevious {
     }
 
 
-    public void reset(){
-        curUrls.clear();
+    public void reset() {
+        URLs.clear();
+        curURLs.clear();
     }
 
-    public void process(Corpus cps) {
+    @Override
+    public void updRemainingBody(Corpus cps) {
         List<String> nsegs = new ArrayList<String>();
-        for (String line: cps.getRefinedSegments()) {
+        curURLs.clear();
+        for (String line : cps.getRemainingBody()) {
             Matcher matcher = mPattern.matcher(line);
             int lastEnd = 0;
             while (matcher.find()) {
@@ -84,15 +97,28 @@ public class Url extends RulePrevious {
                 if (lastEnd < start) {
                     nsegs.add(line.substring(lastEnd, start));
                 }
-                curUrls.add(line.substring(start, end));
+                curURLs.add(line.substring(start, end));
                 lastEnd = end;
             }
             if (lastEnd < line.length()) {
                 nsegs.add(line.substring(lastEnd));
             }
         }
-        cps.setRefinedSegments(nsegs);
-        cps.getX()[this.getStartIndex()] = curUrls.size() > 0 ? 1 : 0;
+        cps.setRemainingBody(nsegs);
+        URLs.addAll(curURLs);
+    }
+
+    @Override
+    public void train(List<Corpus> cpss) {
+        for (Corpus cps: cpss)
+            updRemainingBody(cps);
+        writeCurRules(modelOut, URLs);
+    }
+
+    public void process(Corpus cps) {
+        updRemainingBody(cps);
+        writeCurRules(extractedRulesOut, curURLs);
+        cps.getX()[this.getStartIndex()] = URLs.size() > 0 ? 1 : 0;
     }
     
     public static void main(String[] args) {
@@ -100,7 +126,6 @@ public class Url extends RulePrevious {
                 //"积分攒不停，一起分豪礼”活动你还没参加吗？已经累计送出13部华为智能手机、加吧！\thttp://101.227.251.70:8081/ds.jsp?ms=b35000247b35000038a25000051 三地方看见啊塑料袋分开",
                 "【富阳麻将】网络大赛火热进行中，你来打麻将，我就送话费！参赛就有奖！免费下载www.0571qp.com询4000990330【本地游】";
         //String RE = "(http|https):\\/\\/[\\w\\-_]+(\\.[\\w\\-_]+)+([\\w\\-\\.,@?^=%&amp;:/~\\+#!]*[\\w\\-\\@?^=%&amp;/~\\+#!])?​";
-
 
         Pattern automation = Pattern.compile(REGEX_URL);
         Matcher matcher = automation.matcher(text);
@@ -115,41 +140,6 @@ public class Url extends RulePrevious {
         return 1;
     }
 
-    @Override
-    public void train(List<Corpus> cpss) {
-
-        try {
-            int lineNum = 0;
-            BufferedWriter out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("data/curURLs.txt")));
-            for (Corpus cps: cpss) {
-                List<String> urls = new ArrayList<>();
-                List<String> nsegs = new ArrayList<String>();
-                for (String line : cps.getRefinedSegments()) {
-                    Matcher matcher = mPattern.matcher(line);
-                    int lastEnd = 0;
-                    while (matcher.find()) {
-                        int start = matcher.start();
-                        int end = matcher.end();
-                        if (lastEnd < start) {
-                            nsegs.add(line.substring(lastEnd, start));
-                        }
-                        curUrls.add(line.substring(start, end));
-                        urls.add(curUrls.get(curUrls.size() - 1));
-                        lastEnd = end;
-                    }
-                    if (lastEnd < line.length()) {
-                        nsegs.add(line.substring(lastEnd));
-                    }
-                }
-                cps.setRefinedSegments(nsegs);
-                out.write(urls.toString() + "\n");
-            }
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-    }
 
     @Override
 	public String getName() {

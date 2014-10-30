@@ -4,9 +4,7 @@ import com.xiaomi.smsspam.Utils.Corpus;
 import com.xiaomi.smsspam.Options;
 import com.xiaomi.smsspam.Utils.Tokenizer;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -21,7 +19,16 @@ public class Word extends RulePrevious{
 
     private static Tokenizer tokenizer;
 
+    private List<String> curTokens;
+
     public Word() {
+        curTokens = new ArrayList<>();
+        try {
+            extractedRulesOut = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("data/extractedTokens.txt")));
+            modelOut = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("data/validTokens.txt")));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         tokenizer = new Tokenizer();
         glossary = new HashMap<>();
     }
@@ -36,21 +43,28 @@ public class Word extends RulePrevious{
 
     @Override
     public void reset() {
+        curTokens.clear();
         glossary.clear();
     }
 
     @Override
-    public void process(Corpus cps) {
-        List<String> tokens = new ArrayList<>();
-        for (String line: cps.getRefinedSegments()) {
+    public void updRemainingBody(Corpus cps) {
+        curTokens.clear();
+        for (String line: cps.getRemainingBody()) {
             String[] segs = tokenizer.cut(line);
             for (String seg : segs) {
                 if (Options.ONLY_DICT_WORD && !tokenizer.inDict(seg)) continue;
-                tokens.add(seg);
+                curTokens.add(seg);
             }
         }
-        cps.setRefinedSegments(tokens);
-        cps.setTokens(tokens);//TODO
+        cps.setRemainingBody(new ArrayList<>(curTokens));
+    }
+
+    @Override
+    public void process(Corpus cps) {
+        updRemainingBody(cps);
+        writeCurRules(extractedRulesOut, curTokens);
+        cps.setTokens(cps.getRemainingBody());//TODO
     }
 
     //to tokenize on a whole sms, not applied now
@@ -62,16 +76,13 @@ public class Word extends RulePrevious{
 
     @Override
     public void train(List<Corpus> cpss) {
-        for (Corpus cps : cpss) {
-            for (String line : cps.getRefinedSegments()) {
-                String[] segs = tokenizer.cut(line);
-                for (String seg : segs) {
-                    if (Options.ONLY_DICT_WORD && !tokenizer.inDict(seg)) continue;
-                    if (!glossary.containsKey(seg)) glossary.put(seg, glossary.size());
-                }
-            }
+        //construct the glossary
+        for (Corpus cps: cpss) {
+            updRemainingBody(cps);
+            for (String token: curTokens)
+                if (!glossary.containsKey(token)) glossary.put(token, glossary.size());
         }
-
+        writeCurRules(modelOut, glossary.keySet());
     }
 
     @Override

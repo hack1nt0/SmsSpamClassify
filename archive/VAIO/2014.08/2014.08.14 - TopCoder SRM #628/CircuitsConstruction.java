@@ -24,7 +24,7 @@ public class CircuitsConstruction {
         res = count(circuit, res[1] + 1);
         int rx = res[0];
         int curx = circuit.charAt(cur) == 'A' ? lx + rx : Math.max(lx, rx);
-        //System.out.println(cur + ": " + curx);
+        //System.modelOut.println(cur + ": " + curx);
         return new int[]{curx, res[1]};
     }
 }

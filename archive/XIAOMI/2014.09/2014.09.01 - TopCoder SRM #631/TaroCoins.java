@@ -4,7 +4,7 @@ public class TaroCoins {
     public long getNumber(long N) { //WA
         int MAXN = 60;
         for (MAXN = 0; (1L << MAXN) <= N; ++MAXN); --MAXN;
-        //System.out.println(1L << MAXN);
+        //System.modelOut.println(1L << MAXN);
         int maxACC = 3;
         long dp[][] = new long[MAXN + 1][maxACC + 1];
         if ((N >> 0 & 1) == 0)
@@ -24,7 +24,7 @@ public class TaroCoins {
         long ret = 0;
         for (int i = 0; i <= maxACC; ++i) {
             ret += dp[MAXN][i];
-            //kSystem.out.println(dp[MAXN][i]);
+            //kSystem.modelOut.println(dp[MAXN][i]);
         }
         return ret;
     }

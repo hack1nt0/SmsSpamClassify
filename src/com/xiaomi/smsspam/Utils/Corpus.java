@@ -12,27 +12,27 @@ public class Corpus{
     //tokens after tokenizer(after some rules such as emoji and url)
     private List<String> tokens;
     //tokens after all rules
-    private List<String> refinedSegments;
-    private String originBody;
+    private List<String> remainingBody;
+    private String originalBody;
     private boolean isSpam;
     private int[] X;
     private String address;
 
-    public Corpus(String originBody, boolean isSpam, String address) {
-        this.originBody = originBody;
-        this.refinedSegments = new ArrayList<>(Arrays.asList(originBody));
+    public Corpus(String originalBody, boolean isSpam, String address) {
+        this.originalBody = originalBody;
+        this.remainingBody = new ArrayList<>(Arrays.asList(originalBody));
         this.isSpam = isSpam;
         this.address = address;
         this.X = new int[2];
     }
 
     public void reset() {
-        this.refinedSegments = new ArrayList<String>(Arrays.asList(originBody));
+        this.remainingBody = new ArrayList<String>(Arrays.asList(originalBody));
         this.tokens = null;
     }
 
     public void clear(){
-        tokens = refinedSegments = null;
+        tokens = remainingBody = null;
         X = null;
     }
 
@@ -44,12 +44,12 @@ public class Corpus{
         this.address = address;
     }
 
-    public String getOriginBody() {
-        return originBody;
+    public String getOriginalBody() {
+        return originalBody;
     }
 
-    public void setOriginBody(String origBody) {
-        this.originBody = origBody;
+    public void setOriginalBody(String origBody) {
+        this.originalBody = origBody;
     }
 
     public int[] getX() {
@@ -68,12 +68,12 @@ public class Corpus{
         tokens = segs;
     }
 
-    public List<String> getRefinedSegments(){
-        return refinedSegments;
+    public List<String> getRemainingBody(){
+        return remainingBody;
     }
 
-    public void setRefinedSegments(List<String> segs){
-        refinedSegments = segs;
+    public void setRemainingBody(List<String> segs){
+        remainingBody = segs;
     }
 
     public boolean getIsSpam(){
@@ -85,6 +85,6 @@ public class Corpus{
     }
 
     public Corpus clone(){
-        return new Corpus(originBody, isSpam, address);
+        return new Corpus(originalBody, isSpam, address);
     }
 }

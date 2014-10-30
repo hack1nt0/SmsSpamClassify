@@ -12,6 +12,8 @@ public class Emoji extends RulePrevious {
     CombEmoji combEmoji;
     SingleEmoji singleEmoji;
     int singleEmojiN, combEmojiN;
+    List<String> Emojis;
+    private List<String> curEmojis;
 
 
     class Range implements Comparable<Range> {
@@ -30,6 +32,8 @@ public class Emoji extends RulePrevious {
     }
     public Emoji() {
         try {
+            Emojis = new ArrayList<>();
+            curEmojis = new ArrayList<>();
             singleEmoji = new SingleEmoji();
             BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream("data/composedEmojis.txt")));
             List<String> emojis = new ArrayList<>();
@@ -51,53 +55,19 @@ public class Emoji extends RulePrevious {
     }
 
     @Override
-    public int subClassCount() {
-        return 2;
-    }
-
-    @Override
-    public void train(List<Corpus> cpss) {
-        for (Corpus cps: cpss) {
-            List<String> nsegs = new ArrayList<>();
-            for (String line : cps.getRefinedSegments()) {
-                Map<String, List<Integer>> ps = singleEmoji.getEmojis(line);
-                List<Range> ranges = new ArrayList<>();
-                for (String pattern : ps.keySet())
-                    for (int l : ps.get(pattern)) ranges.add(new Range(l, l + pattern.getBytes().length - 1));
-                singleEmojiN = ranges.size();
-                byte[] bytes = line.getBytes();
-                ranges = disjoin(ranges, bytes.length); //TODO
-                StringBuffer sb = new StringBuffer("");
-                for (int i = 0, l = 0; i < ranges.size() && l < bytes.length; l = ranges.get(i).r + 1, ++i) {
-                    sb.append(new String(bytes, l, ranges.get(i).l - l));
-                }
-                line = sb.toString();
-
-                ranges = combEmoji.getEmojis(line);
-                combEmojiN = ranges.size();
-                if (combEmojiN == 0) {
-                    nsegs.add(line);
-                }
-                ranges = disjoin(ranges, line.length()); //TODO
-                for (int i = 0, l = 0; i < ranges.size() && l < line.length(); l = ranges.get(i).r + 1, ++i) {
-                    nsegs.add(line.substring(l, ranges.get(i).l));
-                }
-            }
-            cps.setRefinedSegments(nsegs);
-        }
-    }
-
-    @Override
-    public void process(Corpus cps) {
+    public void updRemainingBody(Corpus cps) {
         List<String> nsegs = new ArrayList<>();
-        for (String line : cps.getRefinedSegments()) {
+        curEmojis.clear();
+        for (String line : cps.getRemainingBody()) {
             Map<String, List<Integer>> ps = singleEmoji.getEmojis(line);
             List<Range> ranges = new ArrayList<>();
-            for (String pattern : ps.keySet())
+            for (String pattern : ps.keySet()) {
+                curEmojis.add(pattern);
                 for (int l : ps.get(pattern)) ranges.add(new Range(l, l + pattern.getBytes().length - 1));
+            }
             singleEmojiN = ranges.size();
             byte[] bytes = line.getBytes();
-            ranges = disjoin(ranges, bytes.length);
+            ranges = disjoin(ranges, bytes.length); //TODO
             StringBuffer sb = new StringBuffer("");
             for (int i = 0, l = 0; i < ranges.size() && l < bytes.length; l = ranges.get(i).r + 1, ++i) {
                 sb.append(new String(bytes, l, ranges.get(i).l - l));
@@ -105,18 +75,39 @@ public class Emoji extends RulePrevious {
             line = sb.toString();
 
             ranges = combEmoji.getEmojis(line);
+            for (Range R: ranges) {
+                curEmojis.add(line.substring(R.l, R.r + 1));
+            }
             combEmojiN = ranges.size();
             if (combEmojiN == 0) {
                 nsegs.add(line);
             }
-            ranges = disjoin(ranges, line.length());
+            ranges = disjoin(ranges, line.length()); //TODO
             for (int i = 0, l = 0; i < ranges.size() && l < line.length(); l = ranges.get(i).r + 1, ++i) {
                 nsegs.add(line.substring(l, ranges.get(i).l));
             }
         }
+        cps.setRemainingBody(nsegs);
+        Emojis.addAll(curEmojis);
 
-        cps.setRefinedSegments(nsegs);
+    }
 
+    @Override
+    public int subClassCount() {
+        return 2;
+    }
+
+    @Override
+    public void train(List<Corpus> cpss) {
+        for (Corpus cps: cpss)
+            updRemainingBody(cps);
+        writeCurRules(modelOut, Emojis);
+    }
+
+    @Override
+    public void process(Corpus cps) {
+        updRemainingBody(cps);
+        writeCurRules(extractedRulesOut, curEmojis);
         cps.getX()[this.getStartIndex() + 0] = singleEmojiN > 0 ? 1 : 0;
         cps.getX()[this.getStartIndex() + 1] = combEmojiN > 0 ? 1 : 0;
     }
@@ -163,27 +154,27 @@ public class Emoji extends RulePrevious {
 
         CombEmoji acAuto = new CombEmoji(patterns);
         String text = "hello world";
-        System.out.println(acAuto.getEmojis(text));
+        System.modelOut.println(acAuto.getEmojis(text));
 
         String t = "😀";
         byte[] bytes = t.getBytes("UTF-16");//default to UTF-8
-        for (byte bt: bytes) System.out.print(Integer.toHexString(Byte.toUnsignedInt(bt)) + ", ");
-        System.out.println();
-        for (char c: t.toCharArray()) System.out.print(Integer.toHexString(c) + ", ");
-        System.out.println();
+        for (byte bt: bytes) System.modelOut.print(Integer.toHexString(Byte.toUnsignedInt(bt)) + ", ");
+        System.modelOut.println();
+        for (char c: t.toCharArray()) System.modelOut.print(Integer.toHexString(c) + ", ");
+        System.modelOut.println();
 
-        System.out.println();
-        System.out.println(t);
-        SingleEmoji filter = new SingleEmoji();
-        System.out.println(filter.getEmojis(t));
-        System.out.println((int)Byte.MAX_VALUE + ", " + Character.MIN_VALUE);
+        System.modelOut.println();
+        System.modelOut.println(t);
+        SingleEmoji filterNoOverlap = new SingleEmoji();
+        System.modelOut.println(filterNoOverlap.getEmojis(t));
+        System.modelOut.println((int)Byte.MAX_VALUE + ", " + Character.MIN_VALUE);
         */
         Emoji emojiRule = new Emoji();
         String t = "你x-D怎么了呀？😂😂😂😂😂😂😂😂😂😂也不说😂";
     }
 
     class SingleEmoji {
-        //Map [emotion -> offset in bytes[]]
+        //Map [emotion -> offset modelIn bytes[]]
         public Map<String, List<Integer>> getEmojis(String s) {
             Map<String, List<Integer>> emojis = new HashMap<>();
             byte[] bytes = s.getBytes();

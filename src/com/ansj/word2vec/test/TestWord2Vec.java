@@ -12,7 +12,7 @@ import org.json.JSONObject;
 
 public class TestWord2Vec {
     private static final File corpus = new File("data/trainning_data.txt");
-    private static final File w2CIn = new File("data/w2c.in");
+    private static final File w2CIn = new File("data/w2c.modelIn");
     private static final File w2CModel = new File("data/w2c.model");
     public static void main(String[] args) throws IOException, JSONException {
 

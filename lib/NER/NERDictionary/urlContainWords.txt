@@ -1,0 +1,16 @@
+.html
+.htm
+.aspx
+.asp
+.php
+.jsp
+.cn
+.net
+.org
+.com
+.hk
+.gov
+www.
+http://
+https://
+.tw

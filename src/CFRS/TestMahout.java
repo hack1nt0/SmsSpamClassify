@@ -23,16 +23,16 @@ import java.util.List;
 public class TestMahout {
     public static void main(String[] args) throws IOException, TasteException {
         /*
-        BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream("data/ml-10M100K/ratings.dat")));
-        BufferedWriter out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("data/ml-10M100K/ratings.txt")));
-        String line = in.readLine();
+        BufferedReader modelIn = new BufferedReader(new InputStreamReader(new FileInputStream("data/ml-10M100K/ratings.dat")));
+        BufferedWriter modelOut = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("data/ml-10M100K/ratings.txt")));
+        String line = modelIn.readLine();
         while (line != null) {
             String tmp[] = line.split("::");
-            out.write(tmp[0] + "," + tmp[1] + "," + tmp[2]);
-            out.write("\n");
-            line = in.readLine();
+            modelOut.write(tmp[0] + "," + tmp[1] + "," + tmp[2]);
+            modelOut.write("\n");
+            line = modelIn.readLine();
         }
-        out.close();
+        modelOut.close();
 */
 
         DataModel model = new FileDataModel(new File("data/ml-10M100K/ratings.txt"));

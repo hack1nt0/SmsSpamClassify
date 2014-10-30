@@ -29,7 +29,7 @@ public class NumberSC extends Numbers{
             }
             for (int i = 0; i < BANK_CARD_COUNT.length; ++i) {
                 if (c == BANK_CARD_COUNT[i]) {
-                    // System.out.println("Bank card:" + s);
+                    // System.modelOut.println("Bank card:" + s);
                     return true;
                 }
             }
@@ -54,7 +54,7 @@ public class NumberSC extends Numbers{
             }
             if(c > 5 && !isPureType(number)){
                 //if(CHARS_LOOK_LIKE_ONE.indexOf(firstNumber) != -1){
-                    //System.out.println("ConfusionMPhNumbers:" + s);
+                    //System.modelOut.println("ConfusionMPhNumbers:" + s);
                     return true;
                 //}
             }
@@ -82,7 +82,7 @@ public class NumberSC extends Numbers{
             }
             if(MOBILE_PHONE_LENGTH == c && isPureType(number)){
                 if(firstNumber == '1' || '１' == firstNumber || '一' == firstNumber || '壹' == firstNumber){
-                    //System.out.println("MobilePhoneNumber:" + s);
+                    //System.modelOut.println("MobilePhoneNumber:" + s);
                     return true;
                 }
             }

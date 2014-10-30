@@ -14,11 +14,11 @@ import java.util.regex.Pattern;
 public class Bracket extends  RulePrevious{
     private static String RE;
     private static String brackets;
-    private static Set<String> xs;
-    private static Map<String, Integer> validXs;
+    private static Set<String> curBrackets;
+    private static Map<String, Integer> validBrackets;
 
     public Bracket() {
-        xs = new HashSet<>();
+        curBrackets = new HashSet<>();
         brackets = "()[]{}<>【】（）《》『』";
         RE = "";
         for (int i = 0; i < brackets.length(); i += 2) {
@@ -29,14 +29,14 @@ public class Bracket extends  RulePrevious{
         }
         RE = "^(" + RE + ")|(" + RE + ")$";
         //RE = "\\([^\\(^\\)]+\\)$";
-        validXs = new HashMap<>();
+        validBrackets = new HashMap<>();
         try {
             BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream("data/brackets_entropy1.txt")));
             for (int id = 0;; ++id) {
                 String line = in.readLine();
                 if (line == null) break;
                 String[] XH = line.split("\t");
-                validXs.put(XH[0], id);
+                validBrackets.put(XH[0], id);
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -47,14 +47,14 @@ public class Bracket extends  RulePrevious{
 
     @Override
     public int subClassCount() {
-        return validXs.size();
+        return validBrackets.size();
     }
 
     @Override
     public void train(List<Corpus> cpss) {
         /*
-       BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream("data/all_processed.txt.dist.filtled")));
-        //BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+       BufferedReader modelIn = new BufferedReader(new InputStreamReader(new FileInputStream("data/all_processed.txt.dist.filtled")));
+        //BufferedReader modelIn = new BufferedReader(new InputStreamReader(System.modelIn));
 
         PrintWriter out1 = new PrintWriter(new ObjectOutputStream(new FileOutputStream("data/brackets_true.txt")));
         PrintWriter out2 = new PrintWriter(new ObjectOutputStream(new FileOutputStream("data/brackets_false.txt")));
@@ -63,8 +63,8 @@ public class Bracket extends  RulePrevious{
         int tn = 0, fn = 0; // N * M
         for (Corpus cps: cpss) {
             Map<String, Integer> cnts = cps.getIsSpam() ? trues : falses;
-            //PrintStream out = System.out;
-            List<String> segs = cps.getRefinedSegments();
+            //PrintStream modelOut = System.modelOut;
+            List<String> segs = cps.getRemainingBody();
             if (segs.size() == 0) continue;
             for (String x: filter(segs.get(0)))
                 cnts.put(x, cnts.containsKey(x) ? cnts.get(x) + 1 : 1);
@@ -79,29 +79,35 @@ public class Bracket extends  RulePrevious{
             return -1;
         });*/
         for (Corpus cps: cpss) {
-            List<String> nsegs = new ArrayList<>();
-            for (int i = 0; i < cps.getRefinedSegments().size(); ++i) {
-                if (0 < i && i < cps.getRefinedSegments().size() - 1) continue;
-                String str = cps.getRefinedSegments().get(i);
-                //while (true) {
-                Set<String> xs = filter(str);
-                //   if (xs.size() == 0) break;
-                this.xs.addAll(xs);
-                for (String x : xs) {
-                    if (str.startsWith(x)) str = str.substring(x.length());
-                    if (str.endsWith(x)) str = str.substring(0, str.length() - x.length());
-                }
-                //}
-                //System.out.println(str);
-                nsegs.add(str);
-            }
-            cps.setRefinedSegments(nsegs);
+            updRemainingBody(cps);
         }
     }
 
     @Override
     public void reset() {
-        xs.clear();
+        curBrackets.clear();
+    }
+
+    @Override
+    public void updRemainingBody(Corpus cps) {
+        curBrackets.clear();
+        List<String> nsegs = new ArrayList<>();
+        for (int i = 0; i < cps.getRemainingBody().size(); ++i) {
+            if (0 < i && i < cps.getRemainingBody().size() - 1) continue;
+            String str = cps.getRemainingBody().get(i);
+            //while (true) {
+            Set<String> xs = filter(str);
+            //   if (curBrackets.size() == 0) break;
+            curBrackets.addAll(xs);
+            for (String x : xs) {
+                if (str.startsWith(x)) str = str.substring(x.length());
+                if (str.endsWith(x)) str = str.substring(0, str.length() - x.length());
+            }
+            //}
+            //System.modelOut.println(str);
+            nsegs.add(str);
+        }
+        cps.setRemainingBody(nsegs);
     }
 
     //train offline
@@ -157,26 +163,11 @@ public class Bracket extends  RulePrevious{
 
     @Override
     public void process(Corpus cps) {
-        List<String> nsegs = new ArrayList<>();
-        for (int i = 0; i < cps.getRefinedSegments().size(); ++i) {
-            if (0 < i && i < cps.getRefinedSegments().size() - 1) continue;
-            String str = cps.getRefinedSegments().get(i);
-            //while (true) {
-            Set<String> xs = filter(str);
-            //   if (xs.size() == 0) break;
-            this.xs.addAll(xs);
-            for (String x : xs) {
-                if (str.startsWith(x)) str = str.substring(x.length());
-                if (str.endsWith(x)) str = str.substring(0, str.length() - x.length());
-            }
-            //}
-            //System.out.println(str);
-            nsegs.add(str);
-        }
-        cps.setRefinedSegments(nsegs);
-        for (String x: xs) {
-            if (!validXs.containsKey(x)) continue;
-            cps.getX()[this.getStartIndex() + validXs.get(x)] = 1;
+        updRemainingBody(cps);
+        writeCurRules(extractedRulesOut, curBrackets);
+        for (String x: curBrackets) {
+            if (!validBrackets.containsKey(x)) continue;
+            cps.getX()[this.getStartIndex() + validBrackets.get(x)] = 1;
         }
     }
 

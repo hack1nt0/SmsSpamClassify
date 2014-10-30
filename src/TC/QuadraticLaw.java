@@ -9,7 +9,7 @@ public class QuadraticLaw {
             int ord = cmp(dur, d);
             if (ord <= 0) l = mid;
             else r = mid;
-            //System.out.println(l);
+            //System.modelOut.println(l);
         }
         long ans = (long) Math.ceil(l);
         if (ans * ans + ans > d) ans--;

@@ -28,13 +28,13 @@ public class Word2VEC {
 		Word2VEC vec = new Word2VEC();
 		vec.loadJavaModel(new File("library/javaSkip1"));
 
-		// System.out.println("中国" + "\t" +
+		// System.modelOut.println("中国" + "\t" +
 		// Arrays.toString(word2vec.getWordVector("中国")));
 		// ;
-		// System.out.println("毛泽东" + "\t" +
+		// System.modelOut.println("毛泽东" + "\t" +
 		// Arrays.toString(word2vec.getWordVector("毛泽东")));
 		// ;
-		// System.out.println("足球" + "\t" +
+		// System.modelOut.println("足球" + "\t" +
 		// Arrays.toString(word2vec.getWordVector("足球")));
 
 		// Word2VEC vec2 = new Word2VEC();
@@ -50,12 +50,12 @@ public class Word2VEC {
 		System.out.println(System.currentTimeMillis() - start);
 
 		System.out.println(System.currentTimeMillis() - start);
-		// System.out.println(vec2.distance(str));
+		// System.modelOut.println(vec2.distance(str));
 		//
 		//
 		// //男人 国王 女人
-		// System.out.println(word2vec.analogy("邓小平", "毛泽东思想", "毛泽东"));
-		// System.out.println(vec2.analogy("毛泽东", "毛泽东思想", "邓小平"));
+		// System.modelOut.println(word2vec.analogy("邓小平", "毛泽东思想", "毛泽东"));
+		// System.modelOut.println(vec2.analogy("毛泽东", "毛泽东思想", "邓小平"));
 	}
 
 	private HashMap<String, float[]> wordMap = new HashMap<String, float[]>();

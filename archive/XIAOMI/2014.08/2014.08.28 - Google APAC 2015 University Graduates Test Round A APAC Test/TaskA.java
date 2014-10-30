@@ -40,7 +40,7 @@ public class TaskA {
                 String tmp = "";
                 for (int j = 0; j < 7; ++j)
                     tmp += res >> 6 - j & 1;
-                //out.println(Integer.toBinaryString(ret));
+                //modelOut.println(Integer.toBinaryString(ret));
                 ret.add(tmp);
             }
         }
