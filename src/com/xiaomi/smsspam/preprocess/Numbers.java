@@ -109,7 +109,10 @@ public class Numbers extends RulePrevious {
                                             "ConfASCII",
                                             "ConfUTF"
     };
-       
+
+    private static final int MIN_NUMBER_COUNT = 2;
+    private static final int RANGE_SECTIONS_COUNT = 2;
+
     public Numbers()
     {
     	for(int i = 0; i < Names.length; i++)
@@ -168,9 +171,6 @@ public class Numbers extends RulePrevious {
     public void updRemainingBody(Corpus cps) {
 
     }
-
-    private static final int MIN_NUMBER_COUNT = 2;
-    private static final int RANGE_SECTIONS_COUNT = 2;
 
     private boolean dispose(String n, int type, boolean hasConnector, char connector, boolean hasMark, char mark){
         if(n.length() <= MIN_NUMBER_COUNT){
@@ -311,9 +311,6 @@ public class Numbers extends RulePrevious {
     }
 
     private static boolean validFloat(String f){
-//        if(f.length() > 1 && f.charAt(0) == '0' && f.charAt(1) != POINT){
-//            return false;
-//        }
         return f.indexOf(POINT) == f.lastIndexOf(POINT);
     }
 
