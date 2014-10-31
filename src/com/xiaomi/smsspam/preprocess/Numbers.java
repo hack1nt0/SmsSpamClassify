@@ -2,9 +2,7 @@ package com.xiaomi.smsspam.preprocess;
 
 import com.xiaomi.smsspam.Utils.Corpus;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -67,7 +65,8 @@ public class Numbers extends RulePrevious {
     private List<String> dTypeNames = new ArrayList<String>();
    
     
-    protected ArrayList<Number> mNumbers = new ArrayList<Number>();
+    List<Number> validNumbers;
+    List<Number> curNumbers;
     protected int[] mCounts;// = new int[subClassCount()];
 
     protected static final int[] BANK_CARD_COUNT = {15, 16, 18, 19};
@@ -113,8 +112,17 @@ public class Numbers extends RulePrevious {
     private static final int MIN_NUMBER_COUNT = 2;
     private static final int RANGE_SECTIONS_COUNT = 2;
 
+
     public Numbers()
     {
+        curNumbers = new ArrayList<>();
+        validNumbers = new ArrayList<>();
+        try {
+            extractedRulesOut = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("data/extractedNumbers.txt")));
+            modelOut = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("data/validNumbers.txt")));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     	for(int i = 0; i < Names.length; i++)
     	{
     		dNames.add(Names[i]);
@@ -132,10 +140,14 @@ public class Numbers extends RulePrevious {
     }
 
     class Number {
-		String mNumber;
-        boolean mClassified;
-        Number(String n){
-            mNumber = n;
+		String origin;
+        String regularization;
+        String classTag;
+
+        Number(String origin, String regularization, String classTag) {
+            this.origin = origin;
+            this.regularization = regularization;
+            this.classTag = classTag;
         }
     }
     @Override
@@ -157,11 +169,11 @@ public class Numbers extends RulePrevious {
 
     @Override
     public void train(List<Corpus> cpss) {
-
+        for (Corpus cps: cpss) updRemainingBody(cps);
     }
 
     public void reset(){
-        mNumbers.clear();
+        validNumbers.clear();
         for(int i = 0; i < mCounts.length; ++i){
             mCounts[i] = 0;
         }
@@ -169,6 +181,89 @@ public class Numbers extends RulePrevious {
 
     @Override
     public void updRemainingBody(Corpus cps) {
+        for (String line: cps.getRemainingBody()) {
+            int startPos = -1, endPos = -1, lastPos = 0;
+            char connector = '0';
+            boolean hasConnector = false;
+            int firstConnectorPos = -1;
+
+            int numberType = ASCII;
+
+            boolean hasMark = false;  // POINT(.)  COLON(:：)
+            char mark = POINT;
+//System.modelOut.println("Body:" + str);
+
+            for (int i = 0; i < line.length(); ++i) {
+                char c = line.charAt(i);
+                if (looksLikeNumber(c) && c != SPECIAL_DIGIT) {
+                    if (startPos < 0) {
+                        //if(isRegularNumber(c)){
+                        if (looksLikeArabic(c)) {
+                            startPos = i;
+                            numberType = regularType(c);
+                        } else {
+                            continue;
+                        }
+                    }
+                    //if(indexOfNumber(c) == numberType){
+                    if (looksLikeArabic(c)) {
+                        endPos = i;
+                    }
+                } else if (startPos >= 0) {
+                    if (isConnector(c) && !hasConnector) {
+                        connector = c;
+                        hasConnector = true;
+                        firstConnectorPos = i;
+                    } else if (isMark(c) && !hasMark) {
+                        mark = c;
+                        hasMark = true;
+                    } else if (c != connector && c != mark) {
+                        if (startPos > lastPos) {
+                            String subSeg = line.substring(lastPos, startPos);
+//System.modelOut.println("C:" + subSeg);
+                            curNumbers.add(new Number(subSeg, subSeg));
+                        }
+
+                        String nb = line.substring(startPos, endPos + 1);
+//System.modelOut.println("N:" + nb);
+                        if (hasConnector) {
+                            hasConnector = firstConnectorPos < endPos;
+                        }
+                        if (dispose(nb, numberType, hasConnector, connector, hasMark, mark)) {
+                            validNumbers.add(new Number(nb));
+                        }
+                        lastPos = endPos + 1;
+
+                        startPos = -1;
+                        hasConnector = false;
+                        numberType = ASCII;
+                        firstConnectorPos = -1;
+                        hasMark = false;
+                    }
+                }
+            }
+            if (startPos >= 0) {
+                if (startPos > lastPos) {
+                    curNumbers.add(line.substring(lastPos, startPos));
+//System.modelOut.println("C:" + ret.get(ret.size() - 1));
+                }
+                if (endPos + 1 < line.length()) {
+                    curNumbers.add(line.substring(endPos + 1));
+//System.modelOut.println("CC:" + ret.get(ret.size() - 1));
+                }
+                String nb = line.substring(startPos, endPos + 1);
+//System.modelOut.println("N:" + nb);
+                if (dispose(nb, numberType, hasConnector, connector, hasMark, mark)) {
+                    validNumbers.add(new Number(nb));
+                }
+            } else {
+                curNumbers.add(line.substring(lastPos, line.length()));
+//System.modelOut.println("C:" + ret.get(ret.size() - 1));
+            }
+//        mProcessed = true;
+        }
+
+        cps.setRemainingBody(curNumbers);
 
     }
 
@@ -316,88 +411,8 @@ public class Numbers extends RulePrevious {
 
     @Override
     public void process(Corpus cps) {
-        for (String line: cps.getRemainingBody()) {
-            ArrayList<String> ret = new ArrayList<String>();
-            int startPos = -1, endPos = -1, lastPos = 0;
-            char connector = '0';
-            boolean hasConnector = false;
-            int firstConnectorPos = -1;
 
-            int numberType = ASCII;
-
-            boolean hasMark = false;  // POINT(.)  COLON(:：)
-            char mark = POINT;
-//System.modelOut.println("Body:" + str);
-
-            for (int i = 0; i < line.length(); ++i) {
-                char c = line.charAt(i);
-                if (looksLikeNumber(c) && c != SPECIAL_DIGIT) {
-                    if (startPos < 0) {
-                        //if(isRegularNumber(c)){
-                        if (looksLikeArabic(c)) {
-                            startPos = i;
-                            numberType = regularType(c);
-                        } else {
-                            continue;
-                        }
-                    }
-                    //if(indexOfNumber(c) == numberType){
-                    if (looksLikeArabic(c)) {
-                        endPos = i;
-                    }
-                } else if (startPos >= 0) {
-                    if (isConnector(c) && !hasConnector) {
-                        connector = c;
-                        hasConnector = true;
-                        firstConnectorPos = i;
-                    } else if (isMark(c) && !hasMark) {
-                        mark = c;
-                        hasMark = true;
-                    } else if (c != connector && c != mark) {
-                        if (startPos > lastPos) {
-                            String subSeg = line.substring(lastPos, startPos);
-//System.modelOut.println("C:" + subSeg);
-                            ret.add(subSeg);
-                        }
-
-                        String nb = line.substring(startPos, endPos + 1);
-//System.modelOut.println("N:" + nb);
-                        if (hasConnector) {
-                            hasConnector = firstConnectorPos < endPos;
-                        }
-                        if (dispose(nb, numberType, hasConnector, connector, hasMark, mark)) {
-                            mNumbers.add(new Number(nb));
-                        }
-                        lastPos = endPos + 1;
-
-                        startPos = -1;
-                        hasConnector = false;
-                        numberType = ASCII;
-                        firstConnectorPos = -1;
-                        hasMark = false;
-                    }
-                }
-            }
-            if (startPos >= 0) {
-                if (startPos > lastPos) {
-                    ret.add(line.substring(lastPos, startPos));
-//System.modelOut.println("C:" + ret.get(ret.size() - 1));
-                }
-                if (endPos + 1 < line.length()) {
-                    ret.add(line.substring(endPos + 1));
-//System.modelOut.println("CC:" + ret.get(ret.size() - 1));
-                }
-                String nb = line.substring(startPos, endPos + 1);
-//System.modelOut.println("N:" + nb);
-                if (dispose(nb, numberType, hasConnector, connector, hasMark, mark)) {
-                    mNumbers.add(new Number(nb));
-                }
-            } else {
-                ret.add(line.substring(lastPos, line.length()));
-//System.modelOut.println("C:" + ret.get(ret.size() - 1));
-            }
-//        mProcessed = true;
-        }
+        updRemainingBody(cps);
         //TODO setRefinedSegs
         for(int i = 0; i < mCounts.length; ++i){
             cps.getX()[this.getStartIndex() + i] = mCounts[i] > 0 ? 1 : 0;
