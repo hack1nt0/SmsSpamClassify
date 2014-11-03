@@ -1,0 +1,99 @@
+17 PaperAndPaintEasy
+11 computeArea
+4 long
+8
+3 int
+5 width
+3 int
+6 height
+3 int
+5 xfold
+3 int
+3 cnt
+3 int
+2 x1
+3 int
+2 y1
+3 int
+2 x2
+3 int
+2 y2
+6
+0
+8
+int 5
+int 6
+int 2
+int 2
+int 1
+int 1
+int 3
+int 2
+long 21
+1
+1
+8
+int 3
+int 13
+int 1
+int 0
+int 1
+int 8
+int 2
+int 12
+long 35
+1
+2
+8
+int 12
+int 12
+int 7
+int 3
+int 3
+int 1
+int 6
+int 2
+long 124
+1
+3
+8
+int 4
+int 5
+int 4
+int 0
+int 0
+int 0
+int 1
+int 1
+long 19
+1
+4
+8
+int 4
+int 8
+int 4
+int 3
+int 0
+int 1
+int 2
+int 2
+long 24
+1
+5
+8
+int 4
+int 8
+int 3
+int 0
+int 1
+int 1
+int 3
+int 2
+long 30
+1
+10 2014.11.03
+17 TopCoder SRM #441
+0
+20 TC.PaperAndPaintEasy
+0
+3 64M

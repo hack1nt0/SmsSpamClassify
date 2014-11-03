@@ -61,7 +61,7 @@ public class Url extends RulePrevious {
                 "pro|" +
                 "tel|" +
                 "travel|" +
-                "xxx|cn|jp|us|uk))";
+                "xxx|cn|jp|us|uk|im|am))";
         String anySymbolButCN = "[`~!@#$%(\\^)&(\\*)(\\(\\))_(\\+)-=(\\[\\])\\\\(\\{\\})|;':\",(\\.)/<>(\\?)a-zA-Z0-9]";
         String URLPrefix = "((http|https)://)";
 
@@ -69,10 +69,12 @@ public class Url extends RulePrevious {
         domainURL = "(" + domainURL + ")";
 
         String ipURL= "([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])";
-        ipURL = URLPrefix + ipURL + "\\." + ipURL + "\\." + ipURL + "\\." + ipURL + anySymbolButCN + "*";
+        ipURL = URLPrefix + "?" + ipURL + "\\." + ipURL + "\\." + ipURL + "\\." + ipURL + anySymbolButCN + "*";
         ipURL = "(" + ipURL + ")";
 
-        URL = domainURL + "|" + ipURL;
+        String otherURL = URLPrefix + anySymbolButCN + "*";
+
+        URL = domainURL + "|" + ipURL + "|" + otherURL;
 
         mPattern = Pattern.compile(URL);
         //mPatternIP = Pattern.compile(REGEX_IP_URL);

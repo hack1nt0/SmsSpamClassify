@@ -32,6 +32,8 @@ public class Emoji extends RulePrevious {
     }
     public Emoji() {
         try {
+            extractedRulesOut = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("data/extractedEmojis.txt")));
+            modelOut = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("data/validEmojis.txt")));
             Emojis = new ArrayList<>();
             curEmojis = new ArrayList<>();
             singleEmoji = new SingleEmoji();
@@ -89,7 +91,6 @@ public class Emoji extends RulePrevious {
         }
         cps.setRemainingBody(nsegs);
         Emojis.addAll(curEmojis);
-
     }
 
     @Override

@@ -9,15 +9,15 @@ public class RuleManager {
     private static int ruleCnt;
     private RulePrevious[] ruleObjs = {
             new Y(),
-            //new Emoji(),
             //new Bracket(),
             new Splits(),
             new Url(),
-            //new Numbers(),
+            new Numbers(),
+            //new Emoji(),
             new Word(),
             //new SpecificSymbol(),
             //new NewPhrase(),
-            new SmsLength(),
+            //new SmsLength(),
     };
 
     public RuleManager(){

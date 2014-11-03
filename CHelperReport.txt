@@ -1,2 +1,3 @@
-40 src/TC/CandyCupRunningCompetition.tctask
+28 src/TC/NarrowPassage2.tctask
+1
 0
