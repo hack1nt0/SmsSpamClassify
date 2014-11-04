@@ -1,6 +1,6 @@
 package com.xiaomi.smsspam.Utils;
 
-import org.omg.Messaging.SYNC_WITH_TRANSPORT;
+import org.nlpcn.commons.lang.bloomFilter.iface.BitMap;
 
 import java.io.*;
 import java.util.*;
@@ -218,44 +218,57 @@ public class Strings {
 class MiningPatterns {
     class Information
     {
-        ArrayList<String> pattern;
+        List<String> patterns;
+        String pattern;
         Map<Integer,Map<String,List<Integer>>> patStar;
-        ArrayList<Integer> sourceIndex;
+        List<Integer> sourceIndex;
 
-        Information(ArrayList<String> pattern) {
+        Information(String pattern) {
             this.pattern = pattern;
         }
+
+        @Override
+        public String toString() {
+            return pattern.toString();
+        }
     }
-    List<String>[] commonPs;
-    int[] sups;
+    String[] commonPs;
+    int[] sups0, sups1;
+    //boolean[] used;
+    boolean[] invalid;
     int N;
     double[][] threshold;
-    List<String>[][] MCSubSeq;
+    String[][] MCSubSeq;
     double minThreshold = 0.6;
     int minSup;
+    int maxCorpusLen = 0;
+    int[][] zipCnt;
     //构造函数
     public MiningPatterns(int min_sup) {
         this.minSup = min_sup;
     }
 
     boolean initial(String fileName) {
-
         try {
-            //TODO
             BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(fileName)));
             List<String> lines = new ArrayList<>();
             while (true) {
                 String line = in.readLine();
                 if (line == null) break;
                 lines.add(line);
+                maxCorpusLen = Math.max(line.length(), maxCorpusLen);
             }
             N = lines.size();
-            commonPs = new List[N * 2];
-            sups = new int[N * 2];
+            commonPs = new String[N * 2];
+            sups0 = new int[N * 2]; Arrays.fill(sups0, 1);
+            sups1 = new int[N * 2];
+            //used = new boolean[N * 2];
+            invalid = new boolean[N * 2];
             threshold = new double[N * 2][N * 2];
-            MCSubSeq = new List[N * 2][N * 2];
+            MCSubSeq = new String[N * 2][N * 2];
+            zipCnt = new int[2][maxCorpusLen + 1];
             for (int i = 0; i < threshold.length; ++i) Arrays.fill(threshold[i], -1);
-            for (int i = 0; i < lines.size(); ++i) commonPs[i] = new ArrayList<>(Arrays.asList(lines.get(i)));
+            for (int i = 0; i < lines.size(); ++i) commonPs[i] = lines.get(i);
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -266,20 +279,103 @@ class MiningPatterns {
     //生成patterns
     List<Information> getPatWithPosition() {
         List<Information> res = new ArrayList<>();
-        for (int nNode = N; nNode < N * 2; ++nNode) {
+        for (int nNode = N; nNode < N * 2 - 1; ++nNode) {
+            System.out.println("[" + (nNode - N + 1) * 100.0 / (N - 1) + "%] finished.");
             int candI = 0, candJ = 0;
             for (int i = 0; i < nNode; ++i)
                 for (int j = i + 1; j < nNode; ++j) {
+                    if (invalid[i] || invalid[j]) continue;
                     if (MCSubSeq[i][j] == null) {
-                        MCSubSeq[i][j] = getMCSubSeq(commonPs, i, j);
-                        threshold[i][j] = MCSubSeq[i][j].length() / (Math.min(commonPs[i].length(), commonPs[j].length()) + 0.0);
+                        MCSubSeq[i][j] = getMCSubSeq(commonPs[i], commonPs[j]);
+                        //System.out.println("MCSubSeq(" + i + ", " + j + "): " + MCSubSeq[i][j]);
+                        threshold[i][j] = MCSubSeq[i][j].length();// / (Math.min(commonPs[i].length(), commonPs[j].length()) + 0.0);
                     }
-                    if (threshold[i][j] > threshold[candI][candJ]) {candI = i; candJ = j;}
+                    if (threshold[i][j] < threshold[candI][candJ] || threshold[i][j] == threshold[candI][candJ] && sups0[i] + sups0[j] <= sups0[candI] + sups0[candJ]) continue; //TODO add used[i] && used[j] or not
+                    candI = i;
+                    candJ = j;
                 }
+            assert candI == candJ;
+            if (candI == candJ) break;
+            //System.out.println(candI + " + " + candJ + " -> " + nNode);
             commonPs[nNode] = MCSubSeq[candI][candJ];
-            sups[nNode] = sups[candI] + sups[candJ];
-            if (sups[nNode] < minThreshold) continue;
+            sups0[nNode] = sups0[candI] + sups0[candJ];
+            invalid[candI] = invalid[candJ] = true;
+            //commonPs[candI] = commonPs[candJ] = null;
+            for (int i = 0; i < nNode; ++i) { // find text that consist of the commonP
+                if (invalid[i]) continue;
+                if (isSubStr(commonPs[nNode], commonPs[i])) {
+                    sups1[nNode] += sups0[i];
+                }
+            }
+            if (sups0[nNode] + sups1[nNode] < minSup) continue;
+
+            invalid[nNode] = true; //error 1: which line
+
+            boolean overlap = false;
+            for (int i = 0; i < res.size(); ++i)
+                if (isSubStr(commonPs[nNode], res.get(i).pattern)) {overlap = true; break;}
+            if (overlap) continue;
             res.add(new Information(commonPs[nNode]));
+            System.out.println(res.get(res.size() - 1));
+        }
+        return res;
+    }
+
+    private boolean isSubStr(String A, String B) {
+        if (B.length() < A.length()) return false;
+        for (int i = 0, j = 0; i < A.length();) {
+            if (isSeparator(A.charAt(i))) {
+                ++i; continue;
+            }
+            while (j < B.length() && B.charAt(j) != A.charAt(i)) ++j;
+            if (B.length() <= j) return false;
+            ++i; ++j;
+        }
+        return true;
+    }
+
+    private String getMCSubSeq(String A, String B) {
+        for (int i = 0; i < zipCnt.length; ++i)
+            Arrays.fill(zipCnt[i], 0);
+        int N = A.length(), M = B.length();
+        //int[][] cnt = new int[N + 1][M + 1];
+        for (int i = 1; i <= N; ++i) {
+            int curR = i & 1;
+            for (int j = 1; j <= M; ++j) {
+                int res = 0;
+                if (A.charAt(i - 1) == B.charAt(j - 1)) res = Math.max(zipCnt[1 - curR][j - 1] + 1, res);
+                else res = Math.max(zipCnt[1 - curR][j], zipCnt[curR][j - 1]);
+                zipCnt[curR][j] = res;
+            }
+        }
+        StringBuffer sb = new StringBuffer(maxCorpusLen);
+        for (int i = N, j = M; 0 < i && 0 < j;) {
+            if (A.charAt(i - 1) == B.charAt(j - 1)) { //TODO wrong to depending on cnt[i][j]==cnt[i-1][j-1]+1
+                if (!isSeparator(A.charAt(i - 1))) sb.append(A.charAt(i - 1));
+                --i; --j;
+                continue;
+            }
+            int curR = i & 1;
+            if (zipCnt[curR][j] == zipCnt[1 - curR][j]) --i; else --j;
+            if (0 < sb.length() && isSeparator(sb.charAt(sb.length() - 1))) continue;
+            sb.append('*');
+        }
+        return sb.reverse().toString();
+    }
+
+    private boolean isSeparator(char c) {
+        return c == '*';
+    }
+
+    public static void main(String[] args) {
+
+        MiningPatterns miningPatterns = new MiningPatterns(6);
+        miningPatterns.initial("data/NLP/test_small.txt");
+        long start = System.currentTimeMillis();
+        List<Information> ret = miningPatterns.getPatWithPosition();
+        long stop = System.currentTimeMillis();
+        //for (Information p: ret) System.out.println(p);
+        System.out.println("consumed: " + (stop - start) / 1000.0 + "s");
     }
 
 }
