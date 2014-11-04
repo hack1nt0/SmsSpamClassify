@@ -3,6 +3,7 @@ package com.xiaomi.smsspam.preprocess;
 import com.xiaomi.smsspam.Utils.Corpus;
 import com.xiaomi.smsspam.Options;
 import com.xiaomi.smsspam.Utils.Tokenizer;
+import com.xiaomi.smsspam.Utils.myWriter;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -24,8 +25,8 @@ public class Word extends RulePrevious{
     public Word() {
         curTokens = new ArrayList<>();
         try {
-            extractedRulesOut = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("data/extractedTokens.txt")));
-            modelOut = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("data/validTokens.txt")));
+            extractedRulesOut = new myWriter(new FileOutputStream("data/extractedTokens.txt"));
+            modelOut = new myWriter(new FileOutputStream("data/validTokens.txt"));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -63,7 +64,7 @@ public class Word extends RulePrevious{
     @Override
     public void process(Corpus cps) {
         updRemainingBody(cps);
-        writeCurRules(extractedRulesOut, curTokens);
+        extractedRulesOut.writeString(curTokens);
         cps.setTokens(cps.getRemainingBody());//TODO
     }
 
@@ -82,7 +83,7 @@ public class Word extends RulePrevious{
             for (String token: curTokens)
                 if (!glossary.containsKey(token)) glossary.put(token, glossary.size());
         }
-        writeCurRules(modelOut, glossary.keySet());
+        //TODO writeCurRules(modelOut, glossary.keySet());
     }
 
     @Override

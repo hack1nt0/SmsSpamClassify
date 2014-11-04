@@ -1,6 +1,7 @@
 package com.xiaomi.smsspam.preprocess;
 
 import com.xiaomi.smsspam.Utils.Corpus;
+import com.xiaomi.smsspam.Utils.myWriter;
 
 import java.io.*;
 import java.util.*;
@@ -32,8 +33,8 @@ public class Emoji extends RulePrevious {
     }
     public Emoji() {
         try {
-            extractedRulesOut = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("data/extractedEmojis.txt")));
-            modelOut = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("data/validEmojis.txt")));
+            extractedRulesOut = new myWriter(new FileOutputStream("data/extractedEmojis.txt"));
+            modelOut = new myWriter(new FileOutputStream("data/validEmojis.txt"));
             Emojis = new ArrayList<>();
             curEmojis = new ArrayList<>();
             singleEmoji = new SingleEmoji();
@@ -102,13 +103,13 @@ public class Emoji extends RulePrevious {
     public void train(List<Corpus> cpss) {
         for (Corpus cps: cpss)
             updRemainingBody(cps);
-        writeCurRules(modelOut, Emojis);
+        //modelOut.write(Emojis);
     }
 
     @Override
     public void process(Corpus cps) {
         updRemainingBody(cps);
-        writeCurRules(extractedRulesOut, curEmojis);
+        extractedRulesOut.write(curEmojis);
         cps.getX()[this.getStartIndex() + 0] = singleEmojiN > 0 ? 1 : 0;
         cps.getX()[this.getStartIndex() + 1] = combEmojiN > 0 ? 1 : 0;
     }

@@ -164,7 +164,7 @@ public class Bracket extends  RulePrevious{
     @Override
     public void process(Corpus cps) {
         updRemainingBody(cps);
-        writeCurRules(extractedRulesOut, curBrackets);
+        //writeCurRules(extractedRulesOut, curBrackets);
         for (String x: curBrackets) {
             if (!validBrackets.containsKey(x)) continue;
             cps.getX()[this.getStartIndex() + validBrackets.get(x)] = 1;

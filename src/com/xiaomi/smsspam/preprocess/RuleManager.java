@@ -10,9 +10,9 @@ public class RuleManager {
     private RulePrevious[] ruleObjs = {
             new Y(),
             //new Bracket(),
-            new Splits(),
-            new Url(),
-            new Numbers(),
+            //new Splits(),
+            //new Url(),
+            //new Numbers(),
             //new Emoji(),
             new Word(),
             //new SpecificSymbol(),

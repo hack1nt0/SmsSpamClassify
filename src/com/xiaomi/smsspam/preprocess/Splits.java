@@ -1,6 +1,7 @@
 package com.xiaomi.smsspam.preprocess;
 
 import com.xiaomi.smsspam.Utils.Corpus;
+import com.xiaomi.smsspam.Utils.myWriter;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -20,8 +21,8 @@ public class Splits extends RulePrevious {
 
     public Splits() {
         try {
-            extractedRulesOut = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("data/extractedSplits.txt")));
-            modelOut = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("data/validSplits.txt")));
+            extractedRulesOut = new myWriter(new FileOutputStream("data/extractedSplits.txt"));
+            modelOut = new myWriter(new FileOutputStream("data/validSplits.txt"));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -59,7 +60,7 @@ public class Splits extends RulePrevious {
     public void process(Corpus cps) {
         curSplits.clear();
         updRemainingBody(cps);
-        writeCurRules(extractedRulesOut, curSplits);
+        //TODO writeCurRules(extractedRulesOut, curSplits);
         for (int i = 0; i < REs.length; ++i) {
             cps.getX()[this.getStartIndex() + i] = hits[i] > 0 ? 1 : 0;
         }
@@ -81,7 +82,7 @@ public class Splits extends RulePrevious {
             updRemainingBody(cps);
         }
         validSplits.addAll(curSplits);
-        writeCurRules(modelOut, validSplits);
+        //TODO writeCurRules(modelOut, validSplits);
     }
 
     @Override

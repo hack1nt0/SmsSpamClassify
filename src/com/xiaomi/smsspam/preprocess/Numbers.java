@@ -1,6 +1,7 @@
 package com.xiaomi.smsspam.preprocess;
 
 import com.xiaomi.smsspam.Utils.Corpus;
+import com.xiaomi.smsspam.Utils.myWriter;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -118,8 +119,8 @@ public class Numbers extends RulePrevious {
         curNumbers = new ArrayList<>();
         validNumbers = new ArrayList<>();
         try {
-            extractedRulesOut = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("data/extractedNumbers.txt")));
-            modelOut = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("data/validNumbers.txt")));
+            extractedRulesOut = new myWriter(new FileOutputStream("data/extractedNumbers.txt"));
+            modelOut = new myWriter(new FileOutputStream("data/validNumbers.txt"));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -415,7 +416,7 @@ public class Numbers extends RulePrevious {
     public void process(Corpus cps) {
         curNumbers.clear();
         updRemainingBody(cps);
-        writeCurRules(extractedRulesOut, curNumbers);
+        //TODO writeCurRules(extractedRulesOut, curNumbers);
         for(int i = 0; i < mCounts.length; ++i){
             cps.getX()[this.getStartIndex() + i] = mCounts[i] > 0 ? 1 : 0;
         }

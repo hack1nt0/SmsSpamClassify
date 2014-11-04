@@ -66,7 +66,7 @@ public class SpecificSymbol extends RulePrevious {
                 maxIg.add(igs[i]);
             }
         }
-        writeCurRules(modelOut, symbols.keySet());
+        //TODO writeCurRules(modelOut, symbols.keySet());
     }
 
     @Override
@@ -87,7 +87,7 @@ public class SpecificSymbol extends RulePrevious {
                 curSymbols.add(c);
             }
         }
-        writeCurRules(extractedRulesOut, curSymbols);
+        //TODO writeCurRules(extractedRulesOut, curSymbols);
         for (char c: curSymbols) {
             cps.getX()[this.getStartIndex() + symbols.get(c)] = 1;
         }

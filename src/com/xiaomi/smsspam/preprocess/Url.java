@@ -2,6 +2,7 @@ package com.xiaomi.smsspam.preprocess;
 
 import com.xiaomi.smsspam.Options;
 import com.xiaomi.smsspam.Utils.Corpus;
+import com.xiaomi.smsspam.Utils.myWriter;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -33,8 +34,8 @@ public class Url extends RulePrevious {
         curURLs = new ArrayList<>();
         URLs = new ArrayList<>();
         try {
-            extractedRulesOut = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("data/extractedURLs.txt")));
-            modelOut = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("data/validURLs.txt")));
+            extractedRulesOut = new myWriter(new FileOutputStream("data/extractedURLs.txt"));
+            modelOut = new myWriter(new FileOutputStream("data/validURLs.txt"));
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -114,12 +115,12 @@ public class Url extends RulePrevious {
     public void train(List<Corpus> cpss) {
         for (Corpus cps: cpss)
             updRemainingBody(cps);
-        writeCurRules(modelOut, URLs);
+        //TODO writeCurRules(modelOut, URLs);
     }
 
     public void process(Corpus cps) {
         updRemainingBody(cps);
-        writeCurRules(extractedRulesOut, curURLs);
+        //TODO writeCurRules(extractedRulesOut, curURLs);
         cps.getX()[this.getStartIndex()] = URLs.size() > 0 ? 1 : 0;
     }
     

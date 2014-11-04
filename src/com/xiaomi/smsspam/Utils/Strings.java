@@ -214,3 +214,72 @@ public class Strings {
         System.out.println(acAutomation.contains(patterns.get(0) + "23"));
     }
 }
+
+class MiningPatterns {
+    class Information
+    {
+        ArrayList<String> pattern;
+        Map<Integer,Map<String,List<Integer>>> patStar;
+        ArrayList<Integer> sourceIndex;
+
+        Information(ArrayList<String> pattern) {
+            this.pattern = pattern;
+        }
+    }
+    List<String>[] commonPs;
+    int[] sups;
+    int N;
+    double[][] threshold;
+    List<String>[][] MCSubSeq;
+    double minThreshold = 0.6;
+    int minSup;
+    //构造函数
+    public MiningPatterns(int min_sup) {
+        this.minSup = min_sup;
+    }
+
+    boolean initial(String fileName) {
+
+        try {
+            //TODO
+            BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(fileName)));
+            List<String> lines = new ArrayList<>();
+            while (true) {
+                String line = in.readLine();
+                if (line == null) break;
+                lines.add(line);
+            }
+            N = lines.size();
+            commonPs = new List[N * 2];
+            sups = new int[N * 2];
+            threshold = new double[N * 2][N * 2];
+            MCSubSeq = new List[N * 2][N * 2];
+            for (int i = 0; i < threshold.length; ++i) Arrays.fill(threshold[i], -1);
+            for (int i = 0; i < lines.size(); ++i) commonPs[i] = new ArrayList<>(Arrays.asList(lines.get(i)));
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return true;
+    }
+
+    //生成patterns
+    List<Information> getPatWithPosition() {
+        List<Information> res = new ArrayList<>();
+        for (int nNode = N; nNode < N * 2; ++nNode) {
+            int candI = 0, candJ = 0;
+            for (int i = 0; i < nNode; ++i)
+                for (int j = i + 1; j < nNode; ++j) {
+                    if (MCSubSeq[i][j] == null) {
+                        MCSubSeq[i][j] = getMCSubSeq(commonPs, i, j);
+                        threshold[i][j] = MCSubSeq[i][j].length() / (Math.min(commonPs[i].length(), commonPs[j].length()) + 0.0);
+                    }
+                    if (threshold[i][j] > threshold[candI][candJ]) {candI = i; candJ = j;}
+                }
+            commonPs[nNode] = MCSubSeq[candI][candJ];
+            sups[nNode] = sups[candI] + sups[candJ];
+            if (sups[nNode] < minThreshold) continue;
+            res.add(new Information(commonPs[nNode]));
+    }
+
+}

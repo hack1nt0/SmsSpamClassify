@@ -7,10 +7,14 @@ import java.util.Scanner;
  * Created by dy on 14-11-3.
  */
 public class myReader {
-    DataInputStream 
+    ObjectInputStream in;
 
     public myReader(InputStream in) {
-        this.in = new DataInputStream(new BufferedInputStream(in));
+        try {
+            this.in = new ObjectInputStream(new BufferedInputStream(in));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public Integer getInt() {
@@ -48,5 +52,24 @@ public class myReader {
         }
         return null;
     }
+
+    public Object getObject() {
+        try {
+            return in.readObject();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public Object getString() {
+        try {
+            return in.readLine();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
 
 }
