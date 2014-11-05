@@ -1,7 +1,10 @@
 package com.xiaomi.smsspam.Utils;
 
+import sun.nio.ch.ThreadPool;
+
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
 
 /**
  * Created by dy on 14-10-25.
@@ -331,26 +334,68 @@ class MiningPatterns {
         return res;
     }
 
+    class GetMCSubSeq {
+        int cpuN = 6;
+        Thread[] threads = new Thread[cpuN];
+        volatile int allDone = cpuN; //TODO volatile
+
+        GetMCSubSeq(int patternsN) {
+            final int[] from = new int[cpuN]; //TODO final
+            final int[] to = new int[cpuN];
+            for (int i = 0; i < cpuN; ++i) {
+                if (i == 0) {
+                    from[i] = 0; to[i] = patternsN / cpuN; continue;
+                }
+                from[i] = to[i - 1] + 1;
+                to[i] = Math.min(from[i] + patternsN / cpuN, patternsN - 1);
+            }
+            for (int i = 0; i < cpuN; ++i) {
+                final int cur = i;
+                threads[cur] = new Thread() {
+                    @Override
+                    public void run() {
+                        //super.run();
+                        for (int i = from[cur]; i <= to[cur]; ++i) MCSubSeq[patternsN][i] = getMCSubSeq(patterns[patternsN], patterns[i]);
+                        --allDone;
+                    }
+                };
+            }
+        }
+
+        public boolean isRunning() {
+            //threads[0].isAlive(); //TODO
+            return allDone == 0;
+        }
+    }
+
  //生成patterns
     List<Pattern> getPatWithPosition() {
         List<Pattern> ret = new ArrayList<>();
+        for (int i = N - 1; i >= 0; --i)
+            for (int j = 0; j < i; ++j) MCSubSeq[i][j] = getMCSubSeq(patterns[i], patterns[j]);
+
         for (int cur = N; cur < N * 2 - 1; ++cur) {
             //System.out.println("[" + (nNode - N + 1) * 100.0 / (N - 1) + "%] finished.");
             int candI = 0, candJ = 0;
             for (int i = cur - 1; i >= 0; --i) {
+                if (MCSubSeq[i][0] == null) {
+                    while(new GetMCSubSeq(i + 1).isRunning());
+                    break;
+                }
+
                 for (int j = 0; j < i; ++j) {
                     if (invalid[i] || invalid[j] || used[i] && used[j]) continue;
-                    if (MCSubSeq[i][j] == null) {
-                        MCSubSeq[i][j] = getMCSubSeq(patterns[i], patterns[j]);
-                        //System.out.println("MCSubSeq(" + i + ", " + j + "): " + MCSubSeq[i][j]);
-                        threshold[i][j] = MCSubSeq[i][j].sizeInChar();// / (Math.min(patterns[i].length(), patterns[j].length()) + 0.0);
-                    }
+                    MCSubSeq[i][j] = getMCSubSeq(patterns[i], patterns[j]);
+                    //System.out.println("MCSubSeq(" + i + ", " + j + "): " + MCSubSeq[i][j]);
+                    threshold[i][j] = MCSubSeq[i][j].sizeInChar();// / (Math.min(patterns[i].length(), patterns[j].length()) + 0.0);
+
                     if (threshold[i][j] < threshold[candI][candJ]
                             || threshold[i][j] == threshold[candI][candJ] && patterns[i].getSup() + patterns[j].getSup() <= patterns[candI].getSup() + patterns[candJ].getSup())
                         continue; //TODO add used[i] && used[j] or not
                     candI = i;
                     candJ = j;
                 }
+
             }
             assert candI == candJ;
             if (candI == candJ) break;
@@ -428,7 +473,7 @@ class MiningPatterns {
     public static void main(String[] args) throws IOException {
 
         MiningPatterns miningPatterns = new MiningPatterns(5);
-        String filePath = "data/NLP/10086.txt";
+        String filePath = "data/NLP/test_bound.txt";
         miningPatterns.initial(filePath);
         long start = System.currentTimeMillis();
         List<Pattern> ret = miningPatterns.getPatWithPosition();
