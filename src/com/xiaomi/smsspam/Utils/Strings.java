@@ -1,5 +1,6 @@
 package com.xiaomi.smsspam.Utils;
 
+import TC.PaperAndPaintEasy;
 import sun.nio.ch.ThreadPool;
 
 import java.io.*;
@@ -217,21 +218,24 @@ class ACAutomation {
     }
 }
 class MiningPatterns {
-    class Pattern
-    {
+    class Pattern implements Comparable<Pattern>{
         List<String> pattern;
         String rawPattern;
         Map<Integer,Map<String,List<Integer>>> patStar;
         Set<Integer> sourceIndex;
+        int lc, rc;
+        int sizeInChar;
 
         /*
         Information(String rawPattern) {
             this.rawPattern = rawPattern;
         }*/
 
-        Pattern(List<String> pattern, Set<Integer> sourceIndex) {
+        Pattern(List<String> pattern, Set<Integer> sourceIndex, int lc , int rc) {
             this.pattern = pattern;
             this.sourceIndex = sourceIndex;
+            this.lc = lc;
+            this.rc = rc;
         }
 
         public String get(int i) {
@@ -242,14 +246,13 @@ class MiningPatterns {
             return pattern.size();
         }
 
-        public int sizeInChar() {
-            int res = 0;
-            for (String s: pattern) res += s.length();
-            return res;
+        public int getSizeInChar() {
+            return sizeInChar;
         }
 
         public void add(String nToken) {
             pattern.add(nToken);
+            sizeInChar += nToken.equals(sepSymbol) ? 1 : nToken.length();
         }
 
         public int getSup() {
@@ -264,12 +267,18 @@ class MiningPatterns {
         public List<String> getPattern() {
             return pattern;
         }
+
+        @Override
+        public int compareTo(Pattern o) {
+            return o.sizeInChar - this.sizeInChar;
+        }
     }
+
     Pattern[] patterns;
     int[] sups0, sups1;
     boolean[] used;
     boolean[] invalid;
-    int N;
+    static int N;
     double[][] threshold;
     Pattern[][] MCSubSeq;
     double minThreshold = 0.6;
@@ -280,10 +289,10 @@ class MiningPatterns {
     String sepSymbol = "<*>";
     String[] tags = {"<RealNumber>" ,"<TimeSpan>", "<Flow>", "<Money>", "<BankCardNumber>", "<ExpressNumber>", "<PhoneNumber>", "<URL>", "<Time>", "<VerificationCode>​"};
     ACAutomation acAutomation = new ACAutomation(Arrays.asList(tags));
-
+    double supRatio;
     //构造函数
-    public MiningPatterns(int min_sup) {
-        this.minSup = min_sup;
+    public MiningPatterns(double supRatio) {
+        this.supRatio = supRatio;
     }
 
     boolean initial(String fileName) {
@@ -309,9 +318,9 @@ class MiningPatterns {
             for (int i = 0; i < threshold.length; ++i) Arrays.fill(threshold[i], -1);
             for (int i = 0; i < lines.size(); ++i) {
                 List<String> tokens = getTokens(lines.get(i));
-                patterns[i] = new Pattern(tokens, new HashSet<>(Arrays.asList(i)));
+                patterns[i] = new Pattern(tokens, new HashSet<>(Arrays.asList(i)), i, i);
             }
-            //sb = new char[maxCorpusLen * 2 + 1];
+            minSup = (int)Math.floor(N * supRatio);
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -335,27 +344,37 @@ class MiningPatterns {
     }
 
     class GetMCSubSeq {
-        int cpuN = 6;
+        int cpuN = 1;
         Thread[] threads = new Thread[cpuN];
         volatile int allDone = cpuN; //TODO volatile
 
+        final int[] from = new int[cpuN]; //TODO final
+        final int[] to = new int[cpuN];
+
+        public void start() {
+            if (cpuN == 1) {threads[0].run(); return;}
+            for (int i = 0; i < threads.length; ++i) threads[i].start();
+        }
+
         GetMCSubSeq(int patternsN) {
-            final int[] from = new int[cpuN]; //TODO final
-            final int[] to = new int[cpuN];
             for (int i = 0; i < cpuN; ++i) {
                 if (i == 0) {
                     from[i] = 0; to[i] = patternsN / cpuN; continue;
                 }
                 from[i] = to[i - 1] + 1;
-                to[i] = Math.min(from[i] + patternsN / cpuN, patternsN - 1);
+                to[i] = Math.min(from[i] + patternsN / cpuN, patternsN);
             }
+            allDone = cpuN;
             for (int i = 0; i < cpuN; ++i) {
                 final int cur = i;
                 threads[cur] = new Thread() {
                     @Override
                     public void run() {
                         //super.run();
-                        for (int i = from[cur]; i <= to[cur]; ++i) MCSubSeq[patternsN][i] = getMCSubSeq(patterns[patternsN], patterns[i]);
+                        for (int i = from[cur]; i < to[cur]; ++i) {
+                            if (invalid[i] || invalid[patternsN - 1] || used[i] && used[patternsN - 1]) continue;
+                            MCSubSeq[patternsN - 1][i] = getMCSubSeq(patternsN - 1, i);
+                        }
                         --allDone;
                     }
                 };
@@ -364,47 +383,71 @@ class MiningPatterns {
 
         public boolean isRunning() {
             //threads[0].isAlive(); //TODO
-            return allDone == 0;
+            return 0 < allDone;
         }
     }
+
+    GetMCSubSeq getMCSubSeqMulT;
 
  //生成patterns
     List<Pattern> getPatWithPosition() {
         List<Pattern> ret = new ArrayList<>();
-        for (int i = N - 1; i >= 0; --i)
-            for (int j = 0; j < i; ++j) MCSubSeq[i][j] = getMCSubSeq(patterns[i], patterns[j]);
-
+        PriorityQueue<Pattern> priQueue = new PriorityQueue<>();
         for (int cur = N; cur < N * 2 - 1; ++cur) {
             //System.out.println("[" + (nNode - N + 1) * 100.0 / (N - 1) + "%] finished.");
             int candI = 0, candJ = 0;
             for (int i = cur - 1; i >= 0; --i) {
+                /*
                 if (MCSubSeq[i][0] == null) {
-                    while(new GetMCSubSeq(i + 1).isRunning());
-                    break;
-                }
-
+                    getMCSubSeqMulT = new GetMCSubSeq(i + 1);
+                    getMCSubSeqMulT.start();
+                    while(getMCSubSeqMulT.isRunning());
+                }*/
                 for (int j = 0; j < i; ++j) {
                     if (invalid[i] || invalid[j] || used[i] && used[j]) continue;
-                    MCSubSeq[i][j] = getMCSubSeq(patterns[i], patterns[j]);
-                    //System.out.println("MCSubSeq(" + i + ", " + j + "): " + MCSubSeq[i][j]);
-                    threshold[i][j] = MCSubSeq[i][j].sizeInChar();// / (Math.min(patterns[i].length(), patterns[j].length()) + 0.0);
+                    if (MCSubSeq[i][j] != null) continue;
 
+                    MCSubSeq[i][j] = getMCSubSeq(i, j);
+                    priQueue.add(MCSubSeq[i][j]);
+                }
+            }
+
+            Pattern maxPattern = null;
+
+            while (!priQueue.isEmpty()) {
+                maxPattern = priQueue.poll(); //TODO ??
+                //System.out.println("MCSubSeq(" + i + ", " + j + "): " + MCSubSeq[i][j]);
+                //if (MCSubSeq[i][j] == null) continue;
+                    /*
+                    threshold[i][j] = MCSubSeq[i][j].sizeInChar();// / (Math.min(patterns[i].length(), patterns[j].length()) + 0.0);
                     if (threshold[i][j] < threshold[candI][candJ]
                             || threshold[i][j] == threshold[candI][candJ] && patterns[i].getSup() + patterns[j].getSup() <= patterns[candI].getSup() + patterns[candJ].getSup())
                         continue; //TODO add used[i] && used[j] or not
                     candI = i;
                     candJ = j;
+                    */
+                if (invalid[maxPattern.lc] || invalid[maxPattern.rc] || used[maxPattern.lc] && used[maxPattern.rc]) {
+                    maxPattern = null;
+                    continue;
                 }
-
+                break;
             }
-            assert candI == candJ;
-            if (candI == candJ) break;
+
+            if (maxPattern == null) break;
+            candI = maxPattern.lc; candJ = maxPattern.rc;
+            //assert candI == candJ;
+            //if (candI == candJ) break;
 
             //System.out.println(candI + " + " + candJ + " -> " + cur);
-            patterns[cur] = MCSubSeq[candI][candJ];
+            patterns[cur] = maxPattern;
             invalid[candI] = invalid[candJ] = true;
+            //gc
+            patterns[candI] = patterns[candJ] = null;
+            for (int i = 0; i < cur - 1; ++i)
+                MCSubSeq[i][candI] = MCSubSeq[candI][i] = MCSubSeq[i][candJ] = MCSubSeq[candJ][i] = null;
+            //end of gc
 
-            for (int i = 0; i < cur; ++i) { // find text that consist of the commonP
+            for (int i = 0; i < cur; ++i) { // find all texts that consist of the commonP
                 if (invalid[i] || i == candI || i == candJ) continue;
                 if (isSubStr(patterns[cur], patterns[i])) {
                     //sups1[cur] += sups0[i];
@@ -414,13 +457,20 @@ class MiningPatterns {
             }
             if (patterns[cur].getSup() < minSup) continue;
 
-            invalid[cur] = true; //error 1: which line
-            boolean overlap = false;
-            for (int i = 0; i < ret.size(); ++i)
-                if (isSubStr(patterns[cur], ret.get(i))) {overlap = true; break;}
-            if (overlap) continue;
-            ret.add(patterns[cur]);
-            //System.out.println(res.get(res.size() - 1));
+            //filter overlay ones
+            boolean repated = false;
+            for (int i = 0; i < ret.size(); ++i) {
+                if (isSubStr(patterns[cur], ret.get(i)) || patterns[cur].sourceIndex.equals(ret.get(i))) {repated = true; break;}
+            }
+            if (!repated) {
+                ret.add(patterns[cur]);
+                System.out.println(ret.get(ret.size() - 1));
+            }
+            //gc
+            invalid[cur] = true;
+            patterns[cur] = null;
+            for (int i = 0; i < cur - 1; ++i) MCSubSeq[i][cur] = MCSubSeq[cur][i] = null;
+            //if (cur % 4 == 0) System.gc(); //TODO
         }
         return ret;
     }
@@ -438,8 +488,10 @@ class MiningPatterns {
         return true;
     }
 
-    private Pattern getMCSubSeq(Pattern A, Pattern B) {
+    private Pattern getMCSubSeq(int ai, int bi) {
+        Pattern A = patterns[ai], B = patterns[bi];
         int N = A.size(), M = B.size();
+        //int[][] dp = new int[N + 1][M + 1];//TODO global sync?
         //int[][] cnt = new int[N + 1][M + 1];
         for (int i = 1; i <= N; ++i) {
             for (int j = 1; j <= M; ++j) {
@@ -451,7 +503,7 @@ class MiningPatterns {
         }
         Set<Integer> curSI = new HashSet<>(A.sourceIndex);
         curSI.addAll(B.sourceIndex);
-        Pattern ret = new Pattern(new ArrayList<>(), curSI);
+        Pattern ret = new Pattern(new ArrayList<>(), curSI, ai, bi);
 
         for (int i = N, j = M; 0 < i && 0 < j; ) {
             if (A.get(i - 1).equals(B.get(j - 1))) { //TODO wrong to depending on cnt[i][j]==cnt[i-1][j-1]+1
@@ -472,15 +524,16 @@ class MiningPatterns {
 
     public static void main(String[] args) throws IOException {
 
-        MiningPatterns miningPatterns = new MiningPatterns(5);
-        String filePath = "data/NLP/test_bound.txt";
+        String filePath = "data/NLP/10086.txt";
+        MiningPatterns miningPatterns = new MiningPatterns(0.001);
         miningPatterns.initial(filePath);
+        BufferedWriter out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(filePath + ".ext")));
+
         long start = System.currentTimeMillis();
-        List<Pattern> ret = miningPatterns.getPatWithPosition();
-        long stop = System.currentTimeMillis();
-        PrintWriter out = new PrintWriter(new BufferedOutputStream(new FileOutputStream(filePath + ".ext" + ".1")));
-        for (Pattern p: ret) out.println(p);
+        List<Pattern> ps = miningPatterns.getPatWithPosition();
+        for (Pattern p: ps) out.write(p.toString());
         out.close();
+        long stop = System.currentTimeMillis();
         System.out.println("Time Consumed: " + (stop - start) / 1000.0 + "s");
     }
 
