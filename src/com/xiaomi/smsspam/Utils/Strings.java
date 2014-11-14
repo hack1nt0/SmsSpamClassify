@@ -1,11 +1,7 @@
 package com.xiaomi.smsspam.Utils;
 
-import TC.PaperAndPaintEasy;
-import sun.nio.ch.ThreadPool;
-
 import java.io.*;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
 
 /**
  * Created by dy on 14-10-25.
@@ -101,8 +97,7 @@ class ACAutomation {
         }
     }
 
-
-    public void insert(String s, int index) {
+    private void insert(String s, int index) {
         Node cur = root;
         for (int i = 0; i < s.length(); ++i) {
             char c = s.charAt(i);
@@ -217,25 +212,42 @@ class ACAutomation {
         return cur.type == 1 ? cur.patternId : -1;
     }
 }
+
+interface PatternMinable {
+    //得到待挖掘的句子语料
+    public String getCorpus();
+
+    //得到句子语料的最小单元集合
+    public List<String> getTokens();
+}
+
+
 class MiningPatterns {
+
     class Pattern implements Comparable<Pattern>{
         List<String> pattern;
-        String rawPattern;
-        Map<Integer,Map<String,List<Integer>>> patStar;
+        Map<Integer,Map<String,List<Integer>>> wildcards;
         Set<Integer> sourceIndex;
         int lc, rc;
         int sizeInChar;
+
+        public int getSourceId() {
+            return sourceId;
+        }
+
+        int sourceId; //which line in corpus
 
         /*
         Information(String rawPattern) {
             this.rawPattern = rawPattern;
         }*/
 
-        Pattern(List<String> pattern, Set<Integer> sourceIndex, int lc , int rc) {
+        Pattern(List<String> pattern, Set<Integer> sourceIndex, int lc, int rc, int sourceId) {
             this.pattern = pattern;
             this.sourceIndex = sourceIndex;
-            this.lc = lc;
-            this.rc = rc;
+            this.lc = lc; this.rc = rc;
+            this.sourceId = sourceId;
+            wildcards = new HashMap<>();
         }
 
         public String get(int i) {
@@ -261,7 +273,23 @@ class MiningPatterns {
 
         @Override
         public String toString() {
-            return sourceIndex.size() + "\t" + pattern.toString() + "\t\t" + sourceIndex.toString();
+            StringBuffer prtStr = new StringBuffer(sourceIndex.size()  + "\t");
+            for (int i = 0; i <= pattern.size(); ++i) {
+                if (wildcards.containsKey(i) && wildcards.get(i).size() > 1) {
+                    prtStr.append("<*:");
+                    for (String candW: wildcards.get(i).keySet())
+                        prtStr.append(candW).append("|");
+                    prtStr.replace(prtStr.length() - 1, prtStr.length(), ">");
+                    //prtStr.append(sepSymbol);
+                }
+                if (i < pattern.size()) prtStr.append(pattern.get(i));
+            }
+            prtStr.append("\t").append(sourceIndex.toString());
+            for (Integer si: sourceIndex) {
+                prtStr.append(lines.get(si));
+                break;
+            }
+            return prtStr.toString();
         }
 
         public List<String> getPattern() {
@@ -270,57 +298,97 @@ class MiningPatterns {
 
         @Override
         public int compareTo(Pattern o) {
-            return o.sizeInChar - this.sizeInChar;
+            if (o.sizeInChar != this.sizeInChar) return o.sizeInChar - this.sizeInChar;
+            return o.getSup() - this.getSup();
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (!(obj instanceof Pattern)) {
+                throw new RuntimeException("equals with non-valid type");
+            }
+            return this.sourceIndex.equals(((Pattern) obj).sourceIndex);
+        }
+
+        @Override
+        public int hashCode() {
+            return super.hashCode();
+        }
+
+        public void updWildcards(int p, String content, int sourceId) {
+            if (!wildcards.containsKey(p)) wildcards.put(p, new HashMap<>());
+            if (!wildcards.get(p).containsKey(content)) wildcards.get(p).put(content, new ArrayList<>());
+            wildcards.get(p).get(content).add(sourceId);
         }
     }
 
     Pattern[] patterns;
-    int[] sups0, sups1;
-    boolean[] used;
     boolean[] invalid;
-    static int N;
-    double[][] threshold;
+    List<String> lines = new ArrayList<>();
     Pattern[][] MCSubSeq;
-    double minThreshold = 0.6;
     int minSup;
     int maxCorpusLen = 0;
     int[][] dp;
-    //char[] sb;
     String sepSymbol = "<*>";
     String[] tags = {"<RealNumber>" ,"<TimeSpan>", "<Flow>", "<Money>", "<BankCardNumber>", "<ExpressNumber>", "<PhoneNumber>", "<URL>", "<Time>", "<VerificationCode>​"};
     ACAutomation acAutomation = new ACAutomation(Arrays.asList(tags));
     double supRatio;
+    ACAutomation filterDict;
+
     //构造函数
-    public MiningPatterns(double supRatio) {
+    public MiningPatterns(double supRatio, String filterDictPath) {
         this.supRatio = supRatio;
+        try {
+            BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(filterDictPath)));
+            List<String> filterTokens = new ArrayList<>();
+            for (int i = 0;; ++i) {
+                String line = in.readLine();
+                if (line == null) break;
+                filterTokens.add(line);
+            }
+            filterDict = new ACAutomation(filterTokens);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
+
+    boolean inital(List<? extends PatternMinable> toBeMine) {
+
+        for (int i = 0; i < toBeMine.size(); ++i) {
+            List<String> tokens = toBeMine.get(i).getTokens();
+            patterns[i] = new Pattern(tokens, new HashSet<>(Arrays.asList(i)), i, i, i);
+            maxCorpusLen = Math.max(toBeMine.get(i).getCorpus().length(),
+                    maxCorpusLen);
+        }
+        int lineN = toBeMine.size();
+        patterns = new Pattern[lineN * 2];
+        invalid = new boolean[lineN * 2];
+        MCSubSeq = new Pattern[lineN * 2][lineN * 2];
+        dp = new int[maxCorpusLen + 2][maxCorpusLen + 2];
+        minSup = (int) Math.floor(lineN * supRatio);
+        return true;
+    }
+
 
     boolean initial(String fileName) {
         try {
             BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(fileName)));
-            List<String> lines = new ArrayList<>();
             while (true) {
                 String line = in.readLine();
                 if (line == null) break;
                 lines.add(line);
                 maxCorpusLen = Math.max(line.length(), maxCorpusLen);
             }
-            N = lines.size();
-            patterns = new Pattern[N * 2];
-            sups0 = new int[N * 2]; Arrays.fill(sups0, 1);
-            sups1 = new int[N * 2];
-            //used = new boolean[N * 2];
-            invalid = new boolean[N * 2];
-            used = new boolean[N * 2];
-            threshold = new double[N * 2][N * 2];
-            MCSubSeq = new Pattern[N * 2][N * 2];
-            dp = new int[maxCorpusLen + 1][maxCorpusLen + 1];
-            for (int i = 0; i < threshold.length; ++i) Arrays.fill(threshold[i], -1);
+            int linesN = lines.size();
+            patterns = new Pattern[linesN * 2];
+            invalid = new boolean[linesN * 2];
+            MCSubSeq = new Pattern[linesN * 2][linesN * 2];
+            dp = new int[maxCorpusLen + 2][maxCorpusLen + 2];
             for (int i = 0; i < lines.size(); ++i) {
                 List<String> tokens = getTokens(lines.get(i));
-                patterns[i] = new Pattern(tokens, new HashSet<>(Arrays.asList(i)), i, i);
+                patterns[i] = new Pattern(tokens, new HashSet<>(Arrays.asList(i)), i, i, i);
             }
-            minSup = (int)Math.floor(N * supRatio);
+            minSup = (int)Math.floor(linesN * supRatio);
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -372,7 +440,7 @@ class MiningPatterns {
                     public void run() {
                         //super.run();
                         for (int i = from[cur]; i < to[cur]; ++i) {
-                            if (invalid[i] || invalid[patternsN - 1] || used[i] && used[patternsN - 1]) continue;
+                            if (invalid[i] || invalid[patternsN - 1]) continue;
                             MCSubSeq[patternsN - 1][i] = getMCSubSeq(patternsN - 1, i);
                         }
                         --allDone;
@@ -387,14 +455,12 @@ class MiningPatterns {
         }
     }
 
-    GetMCSubSeq getMCSubSeqMulT;
-
  //生成patterns
     List<Pattern> getPatWithPosition() {
         List<Pattern> ret = new ArrayList<>();
         PriorityQueue<Pattern> priQueue = new PriorityQueue<>();
-        for (int cur = N; cur < N * 2 - 1; ++cur) {
-            //System.out.println("[" + (nNode - N + 1) * 100.0 / (N - 1) + "%] finished.");
+        for (int cur = lines.size(); cur < lines.size() * 2 - 1; ++cur) {
+            //System.out.println("[" + (nNode - linesN + 1) * 100.0 / (linesN - 1) + "%] finished.");
             int candI = 0, candJ = 0;
             for (int i = cur - 1; i >= 0; --i) {
                 /*
@@ -404,9 +470,9 @@ class MiningPatterns {
                     while(getMCSubSeqMulT.isRunning());
                 }*/
                 for (int j = 0; j < i; ++j) {
-                    if (invalid[i] || invalid[j] || used[i] && used[j]) continue;
+                    //if (invalid[i] || invalid[j] || used[i] && used[j]) continue;
+                    if (invalid[i] || invalid[j]) continue;
                     if (MCSubSeq[i][j] != null) continue;
-
                     MCSubSeq[i][j] = getMCSubSeq(i, j);
                     priQueue.add(MCSubSeq[i][j]);
                 }
@@ -415,18 +481,8 @@ class MiningPatterns {
             Pattern maxPattern = null;
 
             while (!priQueue.isEmpty()) {
-                maxPattern = priQueue.poll(); //TODO ??
-                //System.out.println("MCSubSeq(" + i + ", " + j + "): " + MCSubSeq[i][j]);
-                //if (MCSubSeq[i][j] == null) continue;
-                    /*
-                    threshold[i][j] = MCSubSeq[i][j].sizeInChar();// / (Math.min(patterns[i].length(), patterns[j].length()) + 0.0);
-                    if (threshold[i][j] < threshold[candI][candJ]
-                            || threshold[i][j] == threshold[candI][candJ] && patterns[i].getSup() + patterns[j].getSup() <= patterns[candI].getSup() + patterns[candJ].getSup())
-                        continue; //TODO add used[i] && used[j] or not
-                    candI = i;
-                    candJ = j;
-                    */
-                if (invalid[maxPattern.lc] || invalid[maxPattern.rc] || used[maxPattern.lc] && used[maxPattern.rc]) {
+                maxPattern = priQueue.poll();
+                if (invalid[maxPattern.lc] || invalid[maxPattern.rc]) {
                     maxPattern = null;
                     continue;
                 }
@@ -435,24 +491,16 @@ class MiningPatterns {
 
             if (maxPattern == null) break;
             candI = maxPattern.lc; candJ = maxPattern.rc;
-            //assert candI == candJ;
-            //if (candI == candJ) break;
 
             //System.out.println(candI + " + " + candJ + " -> " + cur);
             patterns[cur] = maxPattern;
             invalid[candI] = invalid[candJ] = true;
-            //gc
-            patterns[candI] = patterns[candJ] = null;
-            for (int i = 0; i < cur - 1; ++i)
-                MCSubSeq[i][candI] = MCSubSeq[candI][i] = MCSubSeq[i][candJ] = MCSubSeq[candJ][i] = null;
-            //end of gc
 
-            for (int i = 0; i < cur; ++i) { // find all texts that consist of the commonP
-                if (invalid[i] || i == candI || i == candJ) continue;
+            for (int i = 0; i < lines.size(); ++i) { // find all texts that consist of the commonP
+                //if (i == candI || i == candJ) continue;
+                //if (patterns[cur].sourceIndex.contains(i)) continue;
                 if (isSubStr(patterns[cur], patterns[i])) {
-                    //sups1[cur] += sups0[i];
-                    patterns[cur].sourceIndex.addAll(patterns[i].sourceIndex);
-                    used[i] = true;
+                    patterns[cur].sourceIndex.add(i);
                 }
             }
             if (patterns[cur].getSup() < minSup) continue;
@@ -460,39 +508,85 @@ class MiningPatterns {
             //filter overlay ones
             boolean repated = false;
             for (int i = 0; i < ret.size(); ++i) {
-                if (isSubStr(patterns[cur], ret.get(i)) || patterns[cur].sourceIndex.equals(ret.get(i))) {repated = true; break;}
+                if (isSubStr(patterns[cur], ret.get(i))) {
+                    //ret.remove(ret.get(i));
+                    repated = true;
+                    break;
+                }
+                //if (patterns[cur].equals(ret.get(i))) { repated = true; break;}
             }
             if (!repated) {
                 ret.add(patterns[cur]);
                 System.out.println(ret.get(ret.size() - 1));
             }
-            //gc
             invalid[cur] = true;
-            patterns[cur] = null;
-            for (int i = 0; i < cur - 1; ++i) MCSubSeq[i][cur] = MCSubSeq[cur][i] = null;
-            //if (cur % 4 == 0) System.gc(); //TODO
         }
         return ret;
     }
 
+    //TOCHECK TODO
     private boolean isSubStr(Pattern A, Pattern B) {
         if (A.size() > B.size()) return false;
-        for (int i = 0, j = 0; i < A.size();) {
-            if (A.get(i).equals(sepSymbol)) {
-                ++i; continue;
+        if (B.getSourceId() < 0) {
+            for (int i = 0, j = 0; i < A.size();) {
+                while (j < B.size() && !B.get(j).equals(A.get(i))) ++j;
+                if (B.size() <= j) {
+                    return false;
+                }
+                ++i; ++j;
             }
-            while (j < B.size() && !B.get(j).equals(A.get(i))) ++j;
-            if (B.size() <= j) return false;
-            ++i; ++j;
+            return true;
+        }
+
+        int N = A.size() + 2, M = B.size() + 2;//extended the head and the tail
+        boolean[][] dp = new boolean[N][M];
+        dp[N - 1][M - 1] = true;
+        int[][] trail = new int[N][M];
+
+        for (int i = N - 2; i >= 0; --i) //A index
+            for (int j = M - 2; j >= 0; --j) {// B index
+                int realI = i - 1, realJ = j - 1;
+                if (realI < 0 && 0 < realJ || realJ < 0 && 0 < realI || 0 < realI && 0 < realJ && !A.get(realI).equals(B.get(realJ))) continue;
+
+                boolean res = false;
+                StringBuffer sb = new StringBuffer("");
+                while (++realJ < B.size()) {//&& (i == N - 2 || curJ + N - i < B.size())) {
+                    sb.append(B.get(realJ));
+                    if (!isValidWildcard(A, i, i + 1, sb.toString())) break;
+                    if (realI + 1 < A.size() && B.get(realJ).equals(A.get(realI + 1)) && dp[i + 1][realJ + 1]) {
+                        res = true;
+                        trail[i][j] = realJ;
+                        break;
+                    }
+                }
+                if (i == N - 2 && B.size() <= realJ) {
+                    res = true;
+                    trail[i][j] = realJ;
+                }
+
+                dp[i][j] = res;
+            }
+        if (!dp[0][0]) return false;
+
+        for (int i = 0, realJ = -1; i < N - 1; ++i) {
+            StringBuilder stringBuffer = new StringBuilder("");
+            for (int tmpJ = realJ + 1; tmpJ < B.size() && tmpJ < trail[i][realJ + 1]; ++tmpJ) stringBuffer.append(B.get(tmpJ));
+            A.updWildcards(i, stringBuffer.toString(), B.getSourceId());
+            realJ = trail[i][realJ + 1];
         }
         return true;
+    }
+
+    //token is valid in the context of (A[L], A[R])
+    private boolean isValidWildcard(Pattern A, int L, int R, String token) {
+        //TODO
+        if (L == 0 || R == A.size() + 1) return true;
+        return filterDict.match(token, 0).size() == 0;
     }
 
     private Pattern getMCSubSeq(int ai, int bi) {
         Pattern A = patterns[ai], B = patterns[bi];
         int N = A.size(), M = B.size();
-        //int[][] dp = new int[N + 1][M + 1];//TODO global sync?
-        //int[][] cnt = new int[N + 1][M + 1];
         for (int i = 1; i <= N; ++i) {
             for (int j = 1; j <= M; ++j) {
                 int res = 0;
@@ -501,39 +595,69 @@ class MiningPatterns {
                 dp[i][j] = res;
             }
         }
-        Set<Integer> curSI = new HashSet<>(A.sourceIndex);
-        curSI.addAll(B.sourceIndex);
-        Pattern ret = new Pattern(new ArrayList<>(), curSI, ai, bi);
+        //Set<Integer> curSI = new HashSet<>(A.sourceIndex);
+        //curSI.addAll(B.sourceIndex);
+        Pattern ret = new Pattern(new ArrayList<>(), new HashSet<>(), ai, bi, -1);
 
         for (int i = N, j = M; 0 < i && 0 < j; ) {
-            if (A.get(i - 1).equals(B.get(j - 1))) { //TODO wrong to depending on cnt[i][j]==cnt[i-1][j-1]+1
-                if (ret.size() == 0 || !ret.get(ret.size() - 1).equals(sepSymbol) || !A.get(i - 1).equals(sepSymbol))
-                    ret.add(A.get(i - 1));
+            if (A.get(i - 1).equals(B.get(j - 1))) {
+                ret.add(A.get(i - 1));
                 --i;
                 --j;
                 continue;
             }
             if (dp[i][j] == dp[i - 1][j]) --i;
             else --j;
-            if (0 < ret.size() && ret.get(ret.size() - 1).equals(sepSymbol)) continue;
-            ret.add(sepSymbol);
         }
         Collections.reverse(ret.getPattern());
         return ret;
     }
 
+
+    public List<Pattern> expand(List<Pattern> seeds) {
+        StringBuffer tmp = new StringBuffer("");
+        for (Pattern seed: seeds) {
+            //Set<Integer> nSourceIndex = new HashSet<>();
+            for (int si: seed.sourceIndex) {
+                Pattern source = patterns[si];
+                for (int i = 0, j = 0; i < seed.size();) {
+                    tmp.setLength(0);
+                    while (!seed.get(i).equals(source.get(j)))
+                        tmp.append(source.get(j++));
+                    //putSthInNestMap(seed.wildcards, i, tmp.toString(), si);
+                    seed.updWildcards(i, tmp.toString(), si);
+                    ++i;
+                    ++j;
+                    if (i == seed.size()) {
+                        tmp.setLength(0);
+                        while (j < source.size()) tmp.append(source.get(j++));
+                        //putSthInNestMap(seed.wildcards, i, tmp.toString(), si);
+                        seed.updWildcards(i, tmp.toString(), si);
+                    }
+                }
+            }
+        }
+        return seeds;
+    }
+
     public static void main(String[] args) throws IOException {
 
-        String filePath = "data/NLP/10086.txt";
-        MiningPatterns miningPatterns = new MiningPatterns(0.001);
-        miningPatterns.initial(filePath);
-        BufferedWriter out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(filePath + ".ext")));
+        String corpusFilePath = "data/NLP/testCorpus.txt";
+        String filterDictPath = "data/NLP/filterDict.txt";
+        MiningPatterns miningPatterns = new MiningPatterns(0.8, filterDictPath);
+        miningPatterns.initial(corpusFilePath);
+
+        BufferedWriter out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(corpusFilePath + ".ext")));
 
         long start = System.currentTimeMillis();
         List<Pattern> ps = miningPatterns.getPatWithPosition();
-        for (Pattern p: ps) out.write(p.toString());
-        out.close();
+        for (Pattern p: ps) {
+            out.write(p.toString());
+            out.write("\n");
+        }
         long stop = System.currentTimeMillis();
+
+        out.close();
         System.out.println("Time Consumed: " + (stop - start) / 1000.0 + "s");
     }
 
