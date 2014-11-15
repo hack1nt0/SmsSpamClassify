@@ -225,6 +225,10 @@ interface PatternMinable {
 class MiningPatterns {
 
     class Pattern implements Comparable<Pattern>{
+        public void setPattern(List<String> pattern) {
+            this.pattern = pattern;
+        }
+
         List<String> pattern;
         Map<Integer,Map<String,List<Integer>>> wildcards;
         Set<Integer> sourceIndex;
@@ -441,7 +445,7 @@ class MiningPatterns {
                         //super.run();
                         for (int i = from[cur]; i < to[cur]; ++i) {
                             if (invalid[i] || invalid[patternsN - 1]) continue;
-                            MCSubSeq[patternsN - 1][i] = getMCSubSeq(patternsN - 1, i);
+                            MCSubSeq[patternsN - 1][i] = getLCSeq(patternsN - 1, i);
                         }
                         --allDone;
                     }
@@ -473,7 +477,8 @@ class MiningPatterns {
                     //if (invalid[i] || invalid[j] || used[i] && used[j]) continue;
                     if (invalid[i] || invalid[j]) continue;
                     if (MCSubSeq[i][j] != null) continue;
-                    MCSubSeq[i][j] = getMCSubSeq(i, j);
+                    //MCSubSeq[i][j] = getValidLCSeq(i, j);
+                    MCSubSeq[i][j] = getLCSeq(i, j);
                     priQueue.add(MCSubSeq[i][j]);
                 }
             }
@@ -524,7 +529,7 @@ class MiningPatterns {
         return ret;
     }
 
-    //TOCHECK TODO
+    //check and updWildcards
     private boolean isSubStr(Pattern A, Pattern B) {
         if (A.size() > B.size()) return false;
         if (B.getSourceId() < 0) {
@@ -577,14 +582,72 @@ class MiningPatterns {
         return true;
     }
 
+    private Pattern getValidLCSeq(int ai, int bi) {
+        Pattern cand = getLCSeq(ai, bi);
+        if (cand.size() <= 0) return cand;
+        Pattern A = patterns[ai], B = patterns[bi];
+
+        int N = cand.size(), M1 = A.size(), M2 = B.size();//extended the head and the tail
+
+        int[][] dp1 = new int[N + 1][M1 + 1];
+        int[] len1 = new int[N];
+        getMaxLen(cand, A, dp1, len1);
+
+        int[][] dp2 = new int[N + 1][M2 + 1];
+        int[] len2 = new int[N];
+        getMaxLen(cand, B, dp2, len2);
+
+        for (int i = 0; i < len1.length; ++i) len1[i] = Math.min(len1[i], len2[i]);
+        int candi = 0;
+        for (int i = 0; i < len1.length; ++i) if (len1[i] > len1[candi]) candi = i;
+
+        List<String> nPatternList = new ArrayList<>();
+        for (int i = candi; i < candi + len1[candi]; ++i) {
+            if (i >= cand.size()) throw new RuntimeException(candi + ", " + len1[candi] + ", " + cand.size());
+            nPatternList.add(cand.get(i));
+        }
+        cand.setPattern(nPatternList);
+        return cand;
+    }
+
+    private void getMaxLen(Pattern cand, Pattern A, int[][] dp, int[] len) {
+        int N = cand.size(), M = A.size();
+        dp[N][M] = 1;
+        for (int i = N - 1; i >= 0; --i)
+            for (int j = M - 1; j >= 0; --j) {
+                if (!cand.get(i).equals(A.get(j))) continue;
+                int res = 1;
+                StringBuffer sb = new StringBuffer("");
+                boolean find = false;
+                for (int k = j + 1; k < A.size(); ++k) {
+                    sb.append(A.get(k));
+                    if (!isValidWildcard(A, i + 1, i + 2, sb.toString())) break;
+                    if (i + 1 < cand.size() && A.get(k).equals(cand.get(i + 1)) && dp[i + 1][k] > 0) {
+                        find = true;
+                        res = Math.max(dp[i + 1][k] + 1, res);
+                    }
+                }
+                if (!find) {
+                    sb.setLength(0);
+                    for (int k = j + 1; k < A.size(); ++k) sb.append(A.get(i));
+                    if (!isValidWildcard(cand, i, cand.size() + 1, sb.toString())) res = -1;
+                }
+                dp[i][j] = res;
+            }
+
+        for (int i = 0; i < N; ++i)
+            for (int j = 0; j < M; ++j) len[i] = Math.max(dp[i][j], len[i]);
+    }
+
+
     //token is valid in the context of (A[L], A[R])
     private boolean isValidWildcard(Pattern A, int L, int R, String token) {
-        //TODO
+        //(L, [A], R), extended A's pattern[]
         if (L == 0 || R == A.size() + 1) return true;
         return filterDict.match(token, 0).size() == 0;
     }
 
-    private Pattern getMCSubSeq(int ai, int bi) {
+    private Pattern getLCSeq(int ai, int bi) {
         Pattern A = patterns[ai], B = patterns[bi];
         int N = A.size(), M = B.size();
         for (int i = 1; i <= N; ++i) {
@@ -642,9 +705,9 @@ class MiningPatterns {
 
     public static void main(String[] args) throws IOException {
 
-        String corpusFilePath = "data/NLP/testCorpus.txt";
+        String corpusFilePath = "data/NLP/test.txt";
         String filterDictPath = "data/NLP/filterDict.txt";
-        MiningPatterns miningPatterns = new MiningPatterns(0.8, filterDictPath);
+        MiningPatterns miningPatterns = new MiningPatterns(0.008, filterDictPath);
         miningPatterns.initial(corpusFilePath);
 
         BufferedWriter out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(corpusFilePath + ".ext")));
