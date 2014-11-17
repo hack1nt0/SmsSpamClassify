@@ -110,11 +110,11 @@ class ACAutomation {
     }
 
     public List<int[]> match(String text, int startIndex) {
+        List<int[]> ret = new ArrayList<>();
         if (text.length() <= startIndex || startIndex < 0) {
-            return null;
+            return ret;
         }
 
-        List<int[]> ret = new ArrayList<>();
         Node cur = root;
 
         for (int i = startIndex; i < text.length(); ++i) {
@@ -338,6 +338,7 @@ class MiningPatterns {
     ACAutomation acAutomation = new ACAutomation(Arrays.asList(tags));
     double supRatio;
     ACAutomation filterDict;
+    ACAutomation knowledgeDict;
 
     //构造函数
     public MiningPatterns(double supRatio, String filterDictPath) {
@@ -345,12 +346,17 @@ class MiningPatterns {
         try {
             BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(filterDictPath)));
             List<String> filterTokens = new ArrayList<>();
+            List<String> knowledgeTokens = new ArrayList<>();
             for (int i = 0;; ++i) {
                 String line = in.readLine();
                 if (line == null) break;
-                filterTokens.add(line);
+                String[] tokens = line.split(" ");
+                filterTokens.add(tokens[0]);
+                if (tokens.length > 1) knowledgeTokens.add(tokens[0]);
             }
             filterDict = new ACAutomation(filterTokens);
+            knowledgeDict = new ACAutomation(knowledgeTokens);
+
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -477,8 +483,8 @@ class MiningPatterns {
                     //if (invalid[i] || invalid[j] || used[i] && used[j]) continue;
                     if (invalid[i] || invalid[j]) continue;
                     if (MCSubSeq[i][j] != null) continue;
-                    //MCSubSeq[i][j] = getValidLCSeq(i, j);
-                    MCSubSeq[i][j] = getLCSeq(i, j);
+                    MCSubSeq[i][j] = getValidLCSeq(i, j);
+                    //MCSubSeq[i][j] = getLCSeq(i, j);
                     priQueue.add(MCSubSeq[i][j]);
                 }
             }
@@ -544,33 +550,37 @@ class MiningPatterns {
         }
 
         int N = A.size() + 2, M = B.size() + 2;//extended the head and the tail
-        boolean[][] dp = new boolean[N][M];
-        dp[N - 1][M - 1] = true;
+        boolean[][] dp = new boolean[N + 1][M + 1];
+        dp[N][M] = dp[N - 1][M - 1] = true;
         int[][] trail = new int[N][M];
 
         for (int i = N - 2; i >= 0; --i) //A index
             for (int j = M - 2; j >= 0; --j) {// B index
-                int realI = i - 1, realJ = j - 1;
-                if (realI < 0 && 0 < realJ || realJ < 0 && 0 < realI || 0 < realI && 0 < realJ && !A.get(realI).equals(B.get(realJ))) continue;
+                int ri = i - 1, rj = j - 1;
+                //if (realI < 0 && 0 < realJ || realJ < 0 && 0 < realI || 0 < realI && 0 < realJ && !A.get(realI).equals(B.get(realJ))) continue;
+                if (!(i == 0 && j == 0 || ri >= 0 && rj >= 0 && A.get(ri).equals(B.get(rj)))) continue;
 
                 boolean res = false;
                 StringBuffer sb = new StringBuffer("");
-                while (++realJ < B.size()) {//&& (i == N - 2 || curJ + N - i < B.size())) {
-                    sb.append(B.get(realJ));
+                while (++rj < B.size()) {//&& (i == N - 2 || curJ + N - i < B.size())) {
+                    sb.append(B.get(rj));
                     if (!isValidWildcard(A, i, i + 1, sb.toString())) break;
-                    if (realI + 1 < A.size() && B.get(realJ).equals(A.get(realI + 1)) && dp[i + 1][realJ + 1]) {
+                    if (ri + 1 < A.size() && B.get(rj).equals(A.get(ri + 1)) && dp[i + 1][rj + 1]) {
                         res = true;
-                        trail[i][j] = realJ;
+                        trail[i][j] = rj;
                         break;
                     }
                 }
-                if (i == N - 2 && B.size() <= realJ) {
+                if (i == N - 2 && B.size() <= rj) {
                     res = true;
-                    trail[i][j] = realJ;
+                    trail[i][j] = rj;
                 }
-
                 dp[i][j] = res;
             }
+        /*
+        boolean ret = false;
+        for (int i = 0; i <= M; ++i) ret |= dp[0][i];
+        if (!ret) return false;*/
         if (!dp[0][0]) return false;
 
         for (int i = 0, realJ = -1; i < N - 1; ++i) {
@@ -587,14 +597,14 @@ class MiningPatterns {
         if (cand.size() <= 0) return cand;
         Pattern A = patterns[ai], B = patterns[bi];
 
-        int N = cand.size(), M1 = A.size(), M2 = B.size();//extended the head and the tail
+        int N = cand.size() + 2, M1 = A.size() + 2, M2 = B.size() + 2;//extended the head and the tail
 
         int[][] dp1 = new int[N + 1][M1 + 1];
-        int[] len1 = new int[N];
+        int[] len1 = new int[cand.size()];
         getMaxLen(cand, A, dp1, len1);
 
         int[][] dp2 = new int[N + 1][M2 + 1];
-        int[] len2 = new int[N];
+        int[] len2 = new int[cand.size()];
         getMaxLen(cand, B, dp2, len2);
 
         for (int i = 0; i < len1.length; ++i) len1[i] = Math.min(len1[i], len2[i]);
@@ -611,17 +621,20 @@ class MiningPatterns {
     }
 
     private void getMaxLen(Pattern cand, Pattern A, int[][] dp, int[] len) {
-        int N = cand.size(), M = A.size();
-        dp[N][M] = 1;
-        for (int i = N - 1; i >= 0; --i)
-            for (int j = M - 1; j >= 0; --j) {
-                if (!cand.get(i).equals(A.get(j))) continue;
+        int N = cand.size() + 2, M = A.size() + 2;
+        dp[N][M] = dp[N - 1][M - 1] = 1;
+        for (int i = N - 2; i >= 1; --i)
+            for (int j = M - 2; j >= 1; --j) {
+                int ri = i - 1, rj = j - 1;
+                //if (realI < 0 && 0 < realJ || realJ < 0 && 0 < realI || 0 < realI && 0 < realJ && !A.get(realI).equals(B.get(realJ))) continue;
+                if (!(i == 0 && j == 0 || ri >= 0 && rj >= 0 && cand.get(ri).equals(A.get(rj)))) continue;
+
                 int res = 1;
                 StringBuffer sb = new StringBuffer("");
                 boolean find = false;
-                for (int k = j + 1; k < A.size(); ++k) {
+                for (int k = rj + 1; k < A.size(); ++k) {
                     sb.append(A.get(k));
-                    if (!isValidWildcard(A, i + 1, i + 2, sb.toString())) break;
+                    if (!isValidWildcard(A, i, i + 1, sb.toString())) break;
                     if (i + 1 < cand.size() && A.get(k).equals(cand.get(i + 1)) && dp[i + 1][k] > 0) {
                         find = true;
                         res = Math.max(dp[i + 1][k] + 1, res);
@@ -629,21 +642,33 @@ class MiningPatterns {
                 }
                 if (!find) {
                     sb.setLength(0);
-                    for (int k = j + 1; k < A.size(); ++k) sb.append(A.get(i));
-                    if (!isValidWildcard(cand, i, cand.size() + 1, sb.toString())) res = -1;
+                    for (int k = rj + 1; k < A.size(); ++k) sb.append(A.get(k));
+                    if (!isValidWildcard(A, i, A.size() + 1, sb.toString())) res = -1;
                 }
                 dp[i][j] = res;
             }
 
-        for (int i = 0; i < N; ++i)
-            for (int j = 0; j < M; ++j) len[i] = Math.max(dp[i][j], len[i]);
+        StringBuffer prefix = new StringBuffer("");
+        int ret = 0;
+        for (int i = 0, j = 0; i < cand.size() && j < A.size(); ++j) {
+            if (cand.get(i).equals(A.get(j))) {
+                int res = isValidWildcard(A, 0, j + 1, prefix.toString()) ? dp[i + 1][j + 1] + 1 : -1;
+                ret = Math.max(res, ret);
+                ++i; continue;
+            }
+            prefix.append(A.get(j));
+        }
+        dp[0][0] = ret;
+
+        for (int i = 0; i < cand.size(); ++i)
+            for (int j = 0; j < A.size(); ++j) len[i] = Math.max(dp[i + 1][j + 1], len[i]);
     }
 
 
     //token is valid in the context of (A[L], A[R])
     private boolean isValidWildcard(Pattern A, int L, int R, String token) {
         //(L, [A], R), extended A's pattern[]
-        if (L == 0 || R == A.size() + 1) return true;
+        if (L == 0 || R == A.size() + 1) return knowledgeDict.match(token, 0).size() == 0;
         return filterDict.match(token, 0).size() == 0;
     }
 
@@ -705,9 +730,9 @@ class MiningPatterns {
 
     public static void main(String[] args) throws IOException {
 
-        String corpusFilePath = "data/NLP/test.txt";
+        String corpusFilePath = "data/NLP/bug.txt";
         String filterDictPath = "data/NLP/filterDict.txt";
-        MiningPatterns miningPatterns = new MiningPatterns(0.008, filterDictPath);
+        MiningPatterns miningPatterns = new MiningPatterns(0.6, filterDictPath);
         miningPatterns.initial(corpusFilePath);
 
         BufferedWriter out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(corpusFilePath + ".ext")));

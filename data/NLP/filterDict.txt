@@ -52,8 +52,8 @@ GPRS
 缴纳
 小于
 验证码
-<TimeSpan>
-<Flow>
-<Money>
-<Time>
-<VerificationCode>
+<TimeSpan> 1
+<Flow> 1
+<Money> 1
+<Time> 1
+<VerificationCode> 1
