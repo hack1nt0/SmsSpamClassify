@@ -102,6 +102,8 @@ class HMM {
                 ret.add(new String(text, L + i, j - i));
             else
                 for (int k = i; k < j; ++k) ret.add(new String(text, L + k, 1));
+
+            autoS = 0;
             i = j;
         }
         return ret;
