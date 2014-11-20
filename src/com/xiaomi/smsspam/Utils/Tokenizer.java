@@ -6,8 +6,12 @@ public class Tokenizer {
 
     static
     {
+        long before = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
         System.loadLibrary("Tokenizer");
         mNativeObj = nativeInitObject();
+        long after = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
+        double usedMB = (after - before) / 1024.0 / 1024;
+        System.out.println("tokenizer used mem: " + usedMB);
     }
 
     public String[] cut(String res){

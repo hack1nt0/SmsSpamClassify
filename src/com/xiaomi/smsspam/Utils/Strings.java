@@ -563,13 +563,13 @@ class MiningPatterns {
                 boolean res = false;
                 StringBuffer sb = new StringBuffer("");
                 while (++rj < B.size()) {//&& (i == N - 2 || curJ + N - i < B.size())) {
-                    sb.append(B.get(rj));
-                    if (!isValidWildcard(A, i, i + 1, sb.toString())) break;
-                    if (ri + 1 < A.size() && B.get(rj).equals(A.get(ri + 1)) && dp[i + 1][rj + 1]) {
+                    if (ri + 1 < A.size() && B.get(rj).equals(A.get(ri + 1)) && dp[i + 1][j + 1]) {
                         res = true;
                         trail[i][j] = rj;
                         break;
                     }
+                    sb.append(B.get(rj));
+                    if (!isValidWildcard(A, i, i + 1, sb.toString())) break;
                 }
                 if (i == N - 2 && B.size() <= rj) {
                     res = true;
@@ -633,12 +633,12 @@ class MiningPatterns {
                 StringBuffer sb = new StringBuffer("");
                 boolean find = false;
                 for (int k = rj + 1; k < A.size(); ++k) {
+                    if (ri + 1 < cand.size() && A.get(k).equals(cand.get(ri + 1)) && dp[i + 1][k + 1] > 0) {
+                        find = true;
+                        res = Math.max(dp[i + 1][k + 1] + 1, res);
+                    }
                     sb.append(A.get(k));
                     if (!isValidWildcard(A, i, i + 1, sb.toString())) break;
-                    if (i + 1 < cand.size() && A.get(k).equals(cand.get(i + 1)) && dp[i + 1][k] > 0) {
-                        find = true;
-                        res = Math.max(dp[i + 1][k] + 1, res);
-                    }
                 }
                 if (!find) {
                     sb.setLength(0);
@@ -732,10 +732,11 @@ class MiningPatterns {
 
         String corpusFilePath = "data/NLP/bug.txt";
         String filterDictPath = "data/NLP/filterDict.txt";
-        MiningPatterns miningPatterns = new MiningPatterns(0.6, filterDictPath);
-        miningPatterns.initial(corpusFilePath);
-
         BufferedWriter out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(corpusFilePath + ".ext")));
+
+        MiningPatterns miningPatterns = new MiningPatterns(0.8, filterDictPath);
+
+        miningPatterns.initial(corpusFilePath);
 
         long start = System.currentTimeMillis();
         List<Pattern> ps = miningPatterns.getPatWithPosition();

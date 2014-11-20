@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="ansj_seg-2.0">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/Ansj/ansj_seg-2.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
