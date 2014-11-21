@@ -196,7 +196,7 @@ class ACAutomation {
 
 
     //返回最早出现在词典中的词（所有。例如Dic={"ab","bc","bcd","cde"}；findFirstAll("abcdefg",1)返回{"bc","bcd"}）
-    List<int[]> findFirstAll(String text, int startIndex) {
+    List<int[]> findFirstAll(String text, int startIndex) {//TODO
         return filterLeftMost(match(text, startIndex));
     }
 

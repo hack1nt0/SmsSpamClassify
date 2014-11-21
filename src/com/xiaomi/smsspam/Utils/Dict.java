@@ -15,6 +15,7 @@ public abstract class Dict {
     }
 
     public abstract float getLogFreq(int index);
+    public abstract float getMinLogFreq();
 
     public static void changeFreq(String originFile, String destFile) throws IOException {
         BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(originFile)));
@@ -59,18 +60,24 @@ public abstract class Dict {
 class AlphabeticalOrderArray extends Dict{
 
     int MAXN = 350000;
-    char[][] arrs = new char[MAXN][];
-    float[] logFreq = new float[MAXN];
+    char[][] arrs;
+    float[] logFreq;
+    float minLogFreq = 0;
     int realSize = 0;
 
     public AlphabeticalOrderArray(String filePath) {
         try {
-            BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream("data/jieba.dict.utf8")));
+            BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(filePath)));
+            //PrintWriter out = new PrintWriter(new OutputStreamWriter(new FileOutputStream("data/jieba.dict.utf8.sorted")));
             long beforeM = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
             long beforeT = System.currentTimeMillis();
             long totCharN = 0;
+            //List<String> lines = new ArrayList<>();
+            arrs = new char[MAXN][];
+            logFreq = new float[MAXN];
             while (true) {
                 String line = in.readLine();
+                //lines.add(line);
                 if (line == null) break;
                 String[] vecBuf = line.split(" ");
                 if (2 > vecBuf.length) {
@@ -88,16 +95,49 @@ class AlphabeticalOrderArray extends Dict{
                 }
                 ++realSize;
             }
+            Double totFreq = 0.0;
+            for (int i = 0; i < realSize; ++i) totFreq += logFreq[i];
+            for (int i = 0; i < realSize; ++i) {
+                logFreq[i] = (float)Math.log(logFreq[i] / totFreq);
+                minLogFreq = Math.min(logFreq[i], minLogFreq);
+            }
+/*
+            //Sort by hand
+            Integer[] id = new Integer[realSize];
+            for (int i = 0; i < realSize; ++i) id[i] = i;
+            Arrays.sort(id, new Comparator<Integer>() {
+                @Override
+                public int compare(Integer o1, Integer o2) {
+                    for (int i = 0; i < Math.min(arrs[o1].length, arrs[o2].length); ++i) {
+                        if (arrs[o1][i] == arrs[o2][i]) continue;
+                        return arrs[o1][i] - arrs[o2][i];
+                    }
+                    return arrs[o1].length - arrs[o2].length;
+                }
+            });
+
+            for (int i = 0; i < realSize; ++i) out.println(lines.get(id[i]));
+
+            //test
+            for (int i = 0; i < realSize - 1; ++i) {
+                if (charArrCmp(arrs[i], arrs[i + 1]) <= 0) continue;
+                System.out.println(new String(arrs[i]) + " > " + new String(arrs[i + 1]));
+            }
+            for (int i = 0; i < realSize; ++i) {
+                if (contains(arrs[i]) != -1) continue;
+                System.out.println(arrs[i]);
+            }
+*/
             in.close();
             System.gc();
             long afterM = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
             long afterT = System.currentTimeMillis();
             double usedM = (afterM - beforeM) / 1024.0 / 1024;
             double usedT = (afterT - beforeT) / 1000.0;
+            System.out.println("Loaded Dict(SortedArray).");
             System.out.println("Consumed Time: " + usedT + "s");
             System.out.println("Consumed Mem: " + usedM + "MB");
             System.out.println("Consumed Real Mem: " + (totCharN / 1024.0 / 1024 / 8) + "MB");
-            System.out.println(arrs[0]);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -109,13 +149,16 @@ class AlphabeticalOrderArray extends Dict{
         while (l < r) {
             int mid = l + (r - l) / 2;
             int cmp = charArrCmp(token, L, R, arrs[mid]);
-            switch (cmp) {
-                case 0: return mid;
-                case 1: l = mid + 1;
-                case -1: r = mid;
-            }
+            if (cmp == 0) return mid;
+            else if (cmp > 0) l = mid + 1;
+            else r = mid;
         }
         return -1;
+    }
+
+    public int contains(String token) {
+
+        return contains(token.toCharArray(), 0, token.length());
     }
 
     @Override
@@ -123,20 +166,30 @@ class AlphabeticalOrderArray extends Dict{
         return logFreq[index];
     }
 
-    private int charArrCmp(char[] A, int L, int R, char[] B) {
-        for (int i = 0; i < R - L || i < B.length; ++i) {
-            if (i >= B.length || A[i + L] > B[i]) return 1;
-            if (i >= R - L || A[i + L] < B[i]) return -1;
-        }
-        return 0;
+    @Override
+    public float getMinLogFreq() {
+        return minLogFreq;
     }
+
+    public int charArrCmp(char[] A, int L, int R, char[] B) {
+        for (int i = 0; i + L < R && i < B.length; ++i) {
+            if (A[i + L] == B[i]) continue;
+            return A[i + L] - B[i];
+        }
+        return R - L - B.length;
+    }
+
+    public int charArrCmp(char[] a, char[] b) {
+        return charArrCmp(a, 0, a.length, b);
+    }
+
 }
 
 class Trie extends Dict{
 
-    public Trie() {
+    public Trie(String filePath) {
         try {
-            BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream("data/jieba.dict.utf8")));
+            BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(filePath)));
             long beforeM = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
             long beforeT = System.currentTimeMillis();
 
@@ -368,6 +421,11 @@ class Trie extends Dict{
     @Override
     public float getLogFreq(int index) {
         return 0; //TODO
+    }
+
+    @Override
+    public float getMinLogFreq() {
+        return 0;
     }
 
 }
