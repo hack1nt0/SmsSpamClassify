@@ -23,16 +23,15 @@ public class MyTokenizer {
         char[] arr = text.toCharArray();
         int N = arr.length;
 
-        float[] dp = new float[N + 1];
-        dp[N] = 0;
+        Double[] dp = new Double[N + 1];
+        dp[N] = 0.0;
         int[] nxt = new int[N + 1];
         for (int i = N - 1; i >= 0; --i) {
             nxt[i] = i;
-            dp[i] = dict.getMinLogFreq() + dp[i + 1];
+            dp[i] = (double)dict.getMinLogFreq() * (N - 1 - i);
             for (int j = i + 1; j <= N; ++j) {
                 int index = dict.contains(arr, i, j);
-                if (index == -1) continue;
-                float tmp = dict.getLogFreq(index) + dp[j];
+                Double tmp = index == -1 ? dict.getMinLogFreq() * (j - i) + dp[j] : dict.getLogFreq(index) + dp[j];
                 if (tmp > dp[i]) {
                     nxt[i] = j;
                     dp[i] = tmp;
@@ -65,16 +64,19 @@ public class MyTokenizer {
         String text = "姜文的一步之遥将于12月18号上映，期待！";
         String[] tokens = myTokenizer.getTokens(text);
         for (String t: tokens) System.out.println(t);
+
+        double tmp = Math.exp(-0.26268660809250016) + Math.exp(-1.4652633398537678);
+        System.out.println(Double.valueOf("-3.14e+100"));
     }
 }
 
 class HMM {
     int YN = Character.MAX_VALUE;
     int XN = 4;
-    float[] PPx = new float[XN];
-    float[][] Pxixj = new float[XN][XN];
-    float[][] Pxiyi = new float[XN][YN];
-    float[][] dp = new float[YN][XN];
+    Double[] PPx = new Double[XN];
+    Double[][] Pxixj = new Double[XN][XN];
+    Double[][] Pxiyi = new Double[XN][YN];
+    Double[][] dp = new Double[YN][XN];
     int[][] nxt = new int[YN][XN];
     String decode = "BEMS";
     //B E M S
@@ -82,6 +84,7 @@ class HMM {
             {1, 0, 0, 0},
             {2, 0, 1, 2},
     };
+    static double MINVALUE = -3.14e+100;
 
     public HMM(String filePath) {
         try {
@@ -94,15 +97,16 @@ class HMM {
                 if (line == null) break;
                 if (line.charAt(0) == '#') continue;
                 String[] tmp = line.split(" ");
-                for (int i = 0; i < PPx.length; ++i) PPx[i] = Float.valueOf(tmp[i]);
+                for (int i = 0; i < PPx.length; ++i) PPx[i] = Double.valueOf(tmp[i]);
                 line = in.readLine();
                 for (int i = 0; i < XN; ++i) {
                     line = in.readLine();
                     tmp = line.split(" ");
-                    for (int j = 0; j < XN; ++j) Pxixj[i][j] = Float.valueOf(tmp[j]);
+                    for (int j = 0; j < XN; ++j) Pxixj[i][j] = Double.valueOf(tmp[j]);
                 }
 
                 for (int i = 0; i < XN;) {
+                    Arrays.fill(Pxiyi[i], MINVALUE);
                     line = in.readLine();
                     if (line == null) break;
                     if (line.charAt(0) == '#') continue;
@@ -112,7 +116,7 @@ class HMM {
                         j += 2;
                         int k = j;
                         while (k < line.length() && line.charAt(k) != ',') ++k;
-                        float logFreq = Float.valueOf(line.substring(j, k));
+                        Double logFreq = Double.valueOf(line.substring(j, k));
                         Pxiyi[i][y] = logFreq;
                         j = k > line.length() ? k : k + 1;
                     }
@@ -136,25 +140,25 @@ class HMM {
     public List<String> getTokens(char[] text, int L, int R) {
         List<String> ret = new ArrayList<>();
         int M = R - L;
-        Arrays.fill(dp[M], 0);
+        Arrays.fill(dp[M], 0.0);
         for (int i = M - 1; i >= 0; --i)
             for (int j = 0; j < XN; ++j) {
-                float res = Float.NEGATIVE_INFINITY;
+                Double res = MINVALUE;
+                boolean canTrans = false;
                 for (int k = 0; k < XN; ++k) {
-                    if (Pxixj[j][k] == Float.NEGATIVE_INFINITY || dp[i + 1][k] == Float.NEGATIVE_INFINITY) continue;
-                    float tmp = dp[i + 1][k] + Pxixj[j][k];
+                    if (dp[i + 1][k] == Double.NEGATIVE_INFINITY) continue;
+                    Double tmp = dp[i + 1][k] + Pxixj[j][k];
                     if (tmp > res) {
+                        canTrans = true;
                         res = tmp;
                         nxt[i][j] = k;
                     }
                 }
-                if (res == Float.NEGATIVE_INFINITY || Pxiyi[j][text[i + L]] == Float.NEGATIVE_INFINITY) {
-                    dp[i][j] = Float.NEGATIVE_INFINITY;
+                if (!canTrans) {
                     int maxPPxi = 0; for (int k = 0; k < XN; ++k) if (PPx[maxPPxi] < PPx[k]) maxPPxi = k;
                     nxt[i][j] = maxPPxi;
                 }
-                else
-                    dp[i][j] = res  + Pxiyi[j][text[i + L]];
+                dp[i][j] = res  + Pxiyi[j][text[i + L]];
             }
         for (int i = 0; i < XN; ++i) dp[0][i] += PPx[i];
         int xi = 0;

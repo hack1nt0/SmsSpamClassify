@@ -45,18 +45,23 @@ public class Tokenizer {
     public static void main(String[] args) throws IOException {
 
         String testFilePath = "data/testTokenizer.txt";
-        String contrastFilePath = "data/tokenizerContrast.txt.1";
+        String contrastFilePath1 = "data/tokenizerContrast.txt.1";
+        String contrastFilePath2 = "data/tokenizerContrast.txt.2";
         BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(testFilePath)));
-        PrintWriter out = new PrintWriter(new OutputStreamWriter(new FileOutputStream(contrastFilePath)));
+        PrintWriter out1 = new PrintWriter(new OutputStreamWriter(new FileOutputStream(contrastFilePath1)));
+        PrintWriter out2 = new PrintWriter(new OutputStreamWriter(new FileOutputStream(contrastFilePath2)));
         while (true) {
             String line = in.readLine();
             if (line == null) break;
-            out.println(line);
-            out.println(Arrays.asList(Tokenizer.cut(line)));
-            out.println(Arrays.asList(myTokenizer.getTokens(line)));
-            out.println();
+            out1.println(line);
+            out1.println(Arrays.asList(Tokenizer.cut(line)));
+            out1.println();
+            out2.println(line);
+            out2.println(Arrays.asList(myTokenizer.getTokens(line)));
+            out2.println();
         }
-        out.close();
+        out1.close();
+        out2.close();
         in.close();
     }
 }
