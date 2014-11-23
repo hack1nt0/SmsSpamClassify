@@ -1,9 +1,7 @@
 package com.xiaomi.smsspam.Utils;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by dy on 14-11-20.
@@ -26,12 +24,14 @@ public class MyTokenizer {
         Double[] dp = new Double[N + 1];
         dp[N] = 0.0;
         int[] nxt = new int[N + 1];
+        for (int i = N - 1; i >= 0; --i) nxt[i] = i;
         for (int i = N - 1; i >= 0; --i) {
-            nxt[i] = i;
-            dp[i] = (double)dict.getMinLogFreq() * (N - 1 - i);
+            dp[i] = dict.getMinLogFreq() + dp[i + 1];
+            //dp[i] = Double.NEGATIVE_INFINITY; todo no sense
             for (int j = i + 1; j <= N; ++j) {
                 int index = dict.contains(arr, i, j);
-                Double tmp = index == -1 ? dict.getMinLogFreq() * (j - i) + dp[j] : dict.getLogFreq(index) + dp[j];
+                if (index == -1) continue;
+                Double tmp = dict.getLogFreq(index) + dp[j];
                 if (tmp > dp[i]) {
                     nxt[i] = j;
                     dp[i] = tmp;
@@ -42,15 +42,25 @@ public class MyTokenizer {
             if (nxt[i] == i) {
                 int j = i;
                 for (; j < N && nxt[j] == j; ++j);
-                ret.addAll(hmm.getTokens(arr, i, j));
+                for (int l = i, r = i; l < j;) {
+                    while (r < j && !isASCII(arr[r])) ++r;
+                    if (l < r) ret.addAll(hmm.getTokens(arr, l, r));
+                    l = r;
+                    while (r < j && isASCII(arr[r])) ++r;
+                    if (l < r && l < j) ret.add(new String(arr, l, r - l));
+                    l = r;
+                }
                 i = j;
                 continue;
             }
             ret.add(new String(arr, i, nxt[i] - i));
             i = nxt[i];
         }
-        //ret = hmm.getTokens(arr, 0, arr.length);
         return ret.toArray(new String[0]); //ToDO
+    }
+
+    private boolean isASCII(char c) {
+        return 0 <= c && c < 128;
     }
 
     public boolean inDict(String token){
@@ -61,12 +71,15 @@ public class MyTokenizer {
     public static void main(String[] args) {
         MyTokenizer myTokenizer = new MyTokenizer("data/jieba.dict.utf8.sorted", "data/hmm_model.utf8");
 
-        String text = "姜文的一步之遥将于12月18号上映，期待！";
+        String text = "【【【姜文的一步之遥，将于12月18号上映，期待！";
         String[] tokens = myTokenizer.getTokens(text);
         for (String t: tokens) System.out.println(t);
 
-        double tmp = Math.exp(-0.26268660809250016) + Math.exp(-1.4652633398537678);
-        System.out.println(Double.valueOf("-3.14e+100"));
+        String tmp = ".。";
+        byte[] bytes = tmp.getBytes();
+
+        System.out.println();
+
     }
 }
 
@@ -84,7 +97,7 @@ class HMM {
             {1, 0, 0, 0},
             {2, 0, 1, 2},
     };
-    static double MINVALUE = -3.14e+100;
+    static double MINVALUE = -3500;
 
     public HMM(String filePath) {
         try {
@@ -106,7 +119,7 @@ class HMM {
                 }
 
                 for (int i = 0; i < XN;) {
-                    Arrays.fill(Pxiyi[i], MINVALUE);
+                    Arrays.fill(Pxiyi[i], HMM.MINVALUE);
                     line = in.readLine();
                     if (line == null) break;
                     if (line.charAt(0) == '#') continue;
@@ -140,37 +153,41 @@ class HMM {
     public List<String> getTokens(char[] text, int L, int R) {
         List<String> ret = new ArrayList<>();
         int M = R - L;
-        Arrays.fill(dp[M], 0.0);
-        for (int i = M - 1; i >= 0; --i)
+        //Arrays.fill(dp[M], 0.0);
+        for (int i = M - 1; i >= 0; --i) {
+            if (i == M - 1) {
+                for (int j = 0; j < XN; ++j) dp[i][j] = Pxiyi[j][text[i + L]];
+                continue;
+            }
             for (int j = 0; j < XN; ++j) {
-                Double res = MINVALUE;
-                boolean canTrans = false;
+                Double res = Double.NEGATIVE_INFINITY;
                 for (int k = 0; k < XN; ++k) {
-                    if (dp[i + 1][k] == Double.NEGATIVE_INFINITY) continue;
+                    //if (dp[i + 1][k] == HMM.MINVALUE || Pxixj[j][k] == HMM.MINVALUE) continue;
                     Double tmp = dp[i + 1][k] + Pxixj[j][k];
                     if (tmp > res) {
-                        canTrans = true;
                         res = tmp;
                         nxt[i][j] = k;
                     }
                 }
-                if (!canTrans) {
-                    int maxPPxi = 0; for (int k = 0; k < XN; ++k) if (PPx[maxPPxi] < PPx[k]) maxPPxi = k;
-                    nxt[i][j] = maxPPxi;
+                //if (res == HMM.MINVALUE || Pxiyi[j][text[i + L]] == HMM.MINVALUE) {
+                if (res == Double.NEGATIVE_INFINITY) {
+                    //int maxPPxi = 0;
+                    //for (int k = 0; k < XN; ++k) if (PPx[maxPPxi] < PPx[k]) maxPPxi = k;
+                    nxt[i][j] = 0; //B
+                    res = HMM.MINVALUE;
                 }
-                dp[i][j] = res  + Pxiyi[j][text[i + L]];
+                dp[i][j] = res + Pxiyi[j][text[i + L]];
             }
+        }
         for (int i = 0; i < XN; ++i) dp[0][i] += PPx[i];
-        int xi = 0;
-        for (int i = 0; i < XN; ++i) if (dp[0][i] > dp[0][xi]) xi = i;
+        int xi = dp[0][0] < dp[0][3] ? 3 : 0;
+        //for (int i = 0; i < XN; ++i) if (dp[0][i] > dp[0][xi]) xi = i;
+
         int[] xs = new int[M]; xs[0] = xi;
         for (int i = 1; i < xs.length; ++i) xs[i] = nxt[i - 1][xs[i - 1]];
 
-        /*
-        int xit = xi;
-        for (int i = 0; i < M; xit = nxt[i][xit], ++i) System.out.print(decode.charAt(xit));
+        for (int i = 0; i < M; ++i) System.out.print(decode.charAt(xs[i]));
         System.out.println();
-        */
 
         for (int i = 0, autoS = 0; i < M;) {
             autoS = autoM[autoS][xs[i]];

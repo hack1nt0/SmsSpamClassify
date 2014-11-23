@@ -180,6 +180,14 @@ namespace CppJieba
                     }
                 }
 
+                for (uint y = 0; y < Y; y++) {
+                    cout << y << endl;
+                    for(uint x = 0; x < X; x++) {
+                        now = x + y * X;
+                        cout << weight[now] << "\t";
+                    }
+                    cout << endl;
+                }
                 endE = weight[X-1+E*X];
                 endS = weight[X-1+S*X];
                 stat = 0;

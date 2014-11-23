@@ -110,6 +110,6 @@ int main(int argc, char ** argv)
         }
         cut(&seg, arg[1].c_str());
     }
-    while(1);
+    //while(1);
     return EXIT_SUCCESS;
 }
