@@ -28,7 +28,7 @@ public class Corpus{
 
     public void reset() {
         this.remainingBody = new ArrayList<String>(Arrays.asList(originalBody));
-        this.tokens = null;
+        this.tokens = new ArrayList<>();
     }
 
     public void clear(){

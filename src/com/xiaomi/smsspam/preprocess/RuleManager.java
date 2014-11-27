@@ -7,14 +7,15 @@ import java.util.List;
 public class RuleManager {
 
     private static int ruleCnt;
-    private RulePrevious[] ruleObjs = {
+    private Rule[] rules = {
             new Y(),
-            //new Bracket(),
-            //new Splits(),
-            //new Url(),
-            //new Numbers(),
+            new NER(),
+           //new Bracket(),
+            new Splits(),
             //new Emoji(),
             new Word(),
+            //new Url(),
+            //new Numbers(),
             //new SpecificSymbol(),
             //new NewPhrase(),
             //new SmsLength(),
@@ -23,8 +24,8 @@ public class RuleManager {
     public RuleManager(){
     }
 
-    public RulePrevious[] getRuleObjs() {
-        return ruleObjs;
+    public Rule[] getRules() {
+        return rules;
     }
 
     public static int getRuleCnt(){
@@ -33,26 +34,25 @@ public class RuleManager {
 
     // the rules need to be re-train on the cpss
     public void train(List<Corpus> cpss){
-        for(int i = 0; i < ruleObjs.length; ++i){
-            ruleObjs[i].reset();
-            ruleObjs[i].train(cpss);
-            ruleObjs[i].setStartIndex(ruleCnt);
-            ruleCnt += ruleObjs[i].subClassCount();
+        for(int i = 0; i < rules.length; ++i){
+            rules[i].reset();
+            rules[i].train(cpss);
+            rules[i].setStartIndex(ruleCnt);
+            ruleCnt += rules[i].subClassCount();
         }
     }
 
     public void process(Corpus cps) {
+        //cps.reset();
         cps.setX(new int[getRuleCnt()]);//TODO
-        for (int i = 0; i < ruleObjs.length; ++i) {
-            ruleObjs[i].process(cps);
+        for (int i = 0; i < rules.length; ++i) {
+            rules[i].reset();
+            rules[i].process(cps);
         }
     }
 
     public void process(List<Corpus> cpss) {
-        for (Corpus cps: cpss) {
-            cps.reset();
-            process(cps);
-        }
+        for (Corpus cps: cpss) process(cps);
     }
 
 }

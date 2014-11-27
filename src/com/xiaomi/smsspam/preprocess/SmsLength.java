@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.util.List;
 
 // Assume the length of spam of SMS is longer than normal
-public class SmsLength extends RulePrevious {
+public class SmsLength extends Rule {
     int len1; //[len0=0, len1, len2=MAXLEN]
 
     @Override
@@ -48,7 +48,7 @@ public class SmsLength extends RulePrevious {
     }
 
     @Override
-	public String getName() {
+	public String toString() {
 		return "SmsLength";
 	}
 

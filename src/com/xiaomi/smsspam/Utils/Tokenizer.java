@@ -12,26 +12,34 @@ public class Tokenizer {
 
     static
     {
+        /*
         System.loadLibrary("Tokenizer");
         mNativeObj = nativeInitObject();
+        */
         myTokenizer = new MyTokenizer("data/jieba.dict.utf8.sorted", "data/hmm_model.utf8");
     }
 
     public static String[] cut(String text){
-        return nativeCut(mNativeObj, text);
+        //return nativeCut(mNativeObj, text);
+        return myTokenizer.getTokens(text);
     }
 
     public static boolean inDict(String token){
+        /*
         if(token.length() <= 0){
             return false;
         }
         return nativeInDict(mNativeObj, token);
+        */
+        return myTokenizer.inDict(token);
     }
 
 
     public static void destroy(){
+        /*
         nativeDestroyObject(mNativeObj);
         mNativeObj = 0;
+        */
     }
 
     private static native long nativeInitObject();

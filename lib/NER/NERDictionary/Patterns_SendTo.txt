@@ -1,0 +1,9 @@
+
+<!回复类词> ::= 发|发送|发送短信|编辑|编辑短信|回复|回复短信|回|编辑指令
+<!回复内容不包含> ::= ，|；|,|.|。|!|！|"|“|”|《|》|【|】{|}|[|]|发|发送|发送短信|编辑|编辑短信|回复|回复短信|回
+<!到至词> ::= 发送到|发送至|到|至|回复到|回复至
+<??有标志回复内容> ::= <“><*><”>|||<"><*><">|||< ><*>< >	Ext_sendContent:1	CharLenLess:1:8	CharLenLonger:1:1	NoContainDic:1:<!回复内容不包含>
+<?发送到> ::= <!回复类词><??有标志回复内容><!到至词><#m>	Ext_sendToNumber:3	Score:1:1.0
+<?发送到> ::= <!回复类词><*><!到至词><#m>	Ext_sendContent:1	CharLenLess:1:8	CharLenLonger:1:1	Ext_sendToNumber:3	Score:1:1.0	NoContainDic:1:<!回复内容不包含>
+<?发送到> ::= <!回复类词><??有标志回复内容>	Ext_sendContent:1	Score:1:1.0
+//<?发送到> ::= <!回复类词><#m>	Ext_sendContent:1	Score:1:0.1

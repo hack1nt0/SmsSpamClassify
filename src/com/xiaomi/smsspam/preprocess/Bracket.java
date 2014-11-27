@@ -11,7 +11,7 @@ import java.util.regex.Pattern;
 /**
  * Created by root on 14-10-13.
  */
-public class Bracket extends  RulePrevious{
+public class Bracket extends Rule {
     private static String RE;
     private static String brackets;
     private static Set<String> curBrackets;
@@ -172,7 +172,7 @@ public class Bracket extends  RulePrevious{
     }
 
     @Override
-    public String getName() {
+    public String toString() {
         return "Bracket";
     }
 

@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="smsUnderstand">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/NER/smsUnderstand.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

@@ -1,5 +1,7 @@
 package com.xiaomi.smsspam.Utils;
 
+import org.omg.PortableInterceptor.INACTIVE;
+
 import java.io.*;
 import java.util.*;
 
@@ -107,6 +109,17 @@ class ACAutomation {
         }
         cur.type = 1;
         cur.patternId = index;
+    }
+
+    public List<int[]> startWith(String text, int startIndex) {
+        Node cur = root;
+        List<int[]> ret = new ArrayList<>();
+        for (int i = startIndex; i < text.length(); ++i) {
+            if (!cur.childs.containsKey(text.charAt(i))) break;
+            cur = cur.childs.get(text.charAt(i));
+            if (cur.type == 1) ret.add(new int[]{cur.patternId, startIndex, startIndex + i});
+        }
+        return ret;
     }
 
     public List<int[]> match(String text, int startIndex) {

@@ -17,7 +17,7 @@ public class NaiveBayes extends Classifier{
 	public static final int SPAM = Utils.SPAM;
     public static final int NORMAL = Utils.NORMAL;
     public static final int CLASS_COUNT = Utils.CLASS_COUNT;
-    private Map<String, Integer> termID;
+    private Map<String, Integer> termID = new HashMap<>();
     private int[] termSum;
 
     //对Copus进行分类，垃圾邮件返回true，否则返回false
@@ -75,10 +75,10 @@ public class NaiveBayes extends Classifier{
             }
 
             dataOut.writeInt(ruleNumber);
-            dataOut.writeInt(ruleManager.getRuleObjs().length);
-            for (int i = 0; i < ruleManager.getRuleObjs().length; i++) {
-                dataOut.writeChars(ruleManager.getRuleObjs()[i].getName() + "\n");
-                ruleManager.getRuleObjs()[i].writeDef(dataOut);
+            dataOut.writeInt(ruleManager.getRules().length);
+            for (int i = 0; i < ruleManager.getRules().length; i++) {
+                dataOut.writeChars(ruleManager.getRules()[i].getName() + "\n");
+                ruleManager.getRules()[i].writeDef(dataOut);
             }
             for (int i = 0; i < ruleNumber; i++) {
                 dataOut.writeDouble(ruleProbMap[0][i]);
@@ -100,7 +100,7 @@ public class NaiveBayes extends Classifier{
 
     public void train(List<Corpus> trainSet) {
 
-        termID = Word.getGlossary();
+        termID = Word.getGlossary() != null ? Word.getGlossary() : termID;
         termProbMap = new double[CLASS_COUNT][termID.size() + 1];
         ruleProbMap = new double[CLASS_COUNT][RuleManager.getRuleCnt()];
         classPreProbMap = new double[CLASS_COUNT];
@@ -112,7 +112,8 @@ public class NaiveBayes extends Classifier{
 
             classPreProbMap[classNO]++;
 
-            for (String term : terms) {
+            for (int i = 0; i < terms.size(); ++i) {
+                String term = terms.get(i);
                 if (!termID.containsKey(term)) {
                     //throw new RuntimeException("termID is less!");
                     System.out.println(term);

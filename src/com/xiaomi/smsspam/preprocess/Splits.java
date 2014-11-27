@@ -1,7 +1,6 @@
 package com.xiaomi.smsspam.preprocess;
 
 import com.xiaomi.smsspam.Utils.Corpus;
-import com.xiaomi.smsspam.Utils.myWriter;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -10,7 +9,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class Splits extends RulePrevious {
+public class Splits extends Rule {
     //"\\\\" modelIn RE means "\" modelIn raw text TODO
     private static String[] REs;
     private int[] hits;
@@ -21,8 +20,8 @@ public class Splits extends RulePrevious {
 
     public Splits() {
         try {
-            extractedRulesOut = new myWriter(new FileOutputStream("data/extractedSplits.txt"));
-            modelOut = new myWriter(new FileOutputStream("data/validSplits.txt"));
+            extractedRulesOut = new PrintWriter(new FileOutputStream("data/extractedSplits.txt"));
+            modelOut = new PrintWriter(new FileOutputStream("data/validSplits.txt"));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -41,29 +40,32 @@ public class Splits extends RulePrevious {
 
     @Override
     public void updRemainingBody(Corpus cps) {
-        for (int i = 0; i < autoMachine.length; ++i) {
-            List<String> nsegs = new ArrayList<>();
-            for (String line : cps.getRemainingBody()) {
-                Matcher matcher = autoMachine[i].matcher(line);
-                while (matcher.find())
-                    curSplits.add(matcher.group(0).replaceAll(REs[i], REs[i] + ":" + (matcher.end() - matcher.start())));
-                String[] segs = line.split(REs[i]);
-                nsegs.addAll(Arrays.asList(segs));
-                hits[i] += segs.length - 1;
-            }
-            cps.setRemainingBody(nsegs);
-        }
+
         //TODO upd the curSplits
     }
 
     @Override
     public void process(Corpus cps) {
         curSplits.clear();
-        updRemainingBody(cps);
-        //TODO writeCurRules(extractedRulesOut, curSplits);
+        for (int i = 0; i < autoMachine.length; ++i) {
+            List<String> nsegs = new ArrayList<>();
+            for (String line : cps.getRemainingBody()) {
+                Matcher matcher = autoMachine[i].matcher(line);
+                while (matcher.find())
+                    curSplits.add(matcher.group(0).replaceAll(REs[i], REs[i] + ":" + (matcher.end() - matcher.start())));
+                String[] tmp = line.split(REs[i]);
+                StringBuffer sb = new StringBuffer("");
+                for (String s: tmp) sb.append(s);
+                nsegs.add(sb.toString());
+                hits[i] += tmp.length - 1;
+            }
+            cps.setRemainingBody(nsegs);
+        }
         for (int i = 0; i < REs.length; ++i) {
             cps.getX()[this.getStartIndex() + i] = hits[i] > 0 ? 1 : 0;
         }
+
+        extractedRulesOut.println(curSplits);
     }
 
     @Override
@@ -73,20 +75,23 @@ public class Splits extends RulePrevious {
 
     @Override
     public void train(List<Corpus> cpss) {
-        /*
-        for (int S = 0; S < 1<<REs.length; ++S) {
-            //TODO find the optimistic S
-        }*/
-        curSplits.clear();
         for (Corpus cps: cpss) {
-            updRemainingBody(cps);
+            for (int i = 0; i < autoMachine.length; ++i) {
+                List<String> nsegs = new ArrayList<>();
+                for (String line : cps.getRemainingBody()) {
+                    String[] tmp = line.split(REs[i]);
+                    StringBuffer sb = new StringBuffer("");
+                    for (String s : tmp) sb.append(s);
+                    nsegs.add(sb.toString());
+                    hits[i] += tmp.length - 1;
+                }
+                cps.setRemainingBody(nsegs);
+            }
         }
-        validSplits.addAll(curSplits);
-        //TODO writeCurRules(modelOut, validSplits);
     }
 
     @Override
-	public String getName() {
+	public String toString() {
 		return "TabsSerial";
 	}
 

@@ -1,8 +1,6 @@
 package com.xiaomi.smsspam.preprocess;
 
-import com.xiaomi.smsspam.Options;
 import com.xiaomi.smsspam.Utils.Corpus;
-import com.xiaomi.smsspam.Utils.myWriter;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -10,7 +8,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class Url extends RulePrevious {
+public class Url extends Rule {
     //private static String REGEX_URL1 = "(https?|ftp|file)://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]";
 
 
@@ -34,8 +32,8 @@ public class Url extends RulePrevious {
         curURLs = new ArrayList<>();
         URLs = new ArrayList<>();
         try {
-            extractedRulesOut = new myWriter(new FileOutputStream("data/extractedURLs.txt"));
-            modelOut = new myWriter(new FileOutputStream("data/validURLs.txt"));
+            extractedRulesOut = new PrintWriter(new FileOutputStream("data/extractedURLs.txt"));
+            modelOut = new PrintWriter(new FileOutputStream("data/validURLs.txt"));
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -121,6 +119,7 @@ public class Url extends RulePrevious {
     public void process(Corpus cps) {
         updRemainingBody(cps);
         //TODO writeCurRules(extractedRulesOut, curURLs);
+        extractedRulesOut.println(curURLs);
         cps.getX()[this.getStartIndex()] = URLs.size() > 0 ? 1 : 0;
     }
     
@@ -145,7 +144,7 @@ public class Url extends RulePrevious {
 
 
     @Override
-	public String getName() {
+	public String toString() {
 		return "URL";
 	}
 

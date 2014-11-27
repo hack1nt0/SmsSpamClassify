@@ -5,14 +5,12 @@ import com.xiaomi.smsspam.Utils.Corpus;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
  * Created by dy on 14-10-27.
  */
-public class Y extends RulePrevious {
+public class Y extends Rule {
 
     @Override
     public void reset() {
@@ -39,7 +37,7 @@ public class Y extends RulePrevious {
     }
 
     @Override
-    public String getName() {
+    public String toString() {
         return "Y";
     }
 

@@ -3,7 +3,7 @@ package com.xiaomi.smsspam.preprocess;
 import com.xiaomi.smsspam.Utils.Corpus;
 import com.xiaomi.smsspam.Options;
 import com.xiaomi.smsspam.Utils.Tokenizer;
-import com.xiaomi.smsspam.Utils.myWriter;
+import org.omg.Messaging.SYNC_WITH_TRANSPORT;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -14,7 +14,7 @@ import java.util.Map;
 /**
  * Created by dy on 14-10-22.
  */
-public class Word extends RulePrevious{
+public class Word extends Rule {
 
     private static Map<String, Integer> glossary;
 
@@ -25,8 +25,8 @@ public class Word extends RulePrevious{
     public Word() {
         curTokens = new ArrayList<>();
         try {
-            extractedRulesOut = new myWriter(new FileOutputStream("data/extractedTokens.txt"));
-            modelOut = new myWriter(new FileOutputStream("data/validTokens.txt"));
+            extractedRulesOut = new PrintWriter(new FileOutputStream("data/extractedTokens.txt"));
+            modelOut = new PrintWriter(new FileOutputStream("data/validTokens.txt"));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -45,11 +45,14 @@ public class Word extends RulePrevious{
     @Override
     public void reset() {
         curTokens.clear();
-        glossary.clear();
     }
 
     @Override
     public void updRemainingBody(Corpus cps) {
+    }
+
+    @Override
+    public void process(Corpus cps) {
         curTokens.clear();
         for (String line: cps.getRemainingBody()) {
             String[] segs = tokenizer.cut(line);
@@ -59,16 +62,10 @@ public class Word extends RulePrevious{
             }
         }
         cps.setRemainingBody(new ArrayList<>(curTokens));
-    }
-
-    @Override
-    public void process(Corpus cps) {
-        updRemainingBody(cps);
-        extractedRulesOut.writeString(curTokens);
         cps.setTokens(cps.getRemainingBody());//TODO
-    }
 
-    //to tokenize on a whole sms, not applied now
+        extractedRulesOut.println(curTokens);
+    }
 
     @Override
     public int subClassCount() {
@@ -79,15 +76,21 @@ public class Word extends RulePrevious{
     public void train(List<Corpus> cpss) {
         //construct the glossary
         for (Corpus cps: cpss) {
-            updRemainingBody(cps);
-            for (String token: curTokens)
-                if (!glossary.containsKey(token)) glossary.put(token, glossary.size());
+            curTokens.clear();
+            for (String segment: cps.getRemainingBody()) {
+                String[] segs = tokenizer.cut(segment);
+                for (String token : segs) {
+                    curTokens.add(token);
+                    if (!glossary.containsKey(token)) glossary.put(token, glossary.size());
+                }
+            }
+            cps.setRemainingBody(curTokens);
         }
-        //TODO writeCurRules(modelOut, glossary.keySet());
+        System.out.println(glossary.size());
     }
 
     @Override
-    public String getName() {
+    public String toString() {
         return "Word";
     }
 

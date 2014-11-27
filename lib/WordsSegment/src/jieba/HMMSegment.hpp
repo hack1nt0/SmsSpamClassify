@@ -152,6 +152,7 @@ namespace CppJieba
                     return false;
                 }
 
+                double MIN_DOUBLE = -3500;
                 //start
                 for(uint y = 0; y < Y; y++)
                 {
@@ -165,7 +166,8 @@ namespace CppJieba
                     for(uint y = 0; y < Y; y++)
                     {
                         now = x + y*X;
-                        weight[now] = MIN_DOUBLE;
+                        //weight[now] = MIN_DOUBLE;
+                        weight[now] = -3.14e+100;
                         path[now] = E; // warning
                         for(uint preY = 0; preY < Y; preY++)
                         {
@@ -184,7 +186,7 @@ namespace CppJieba
                     cout << y << endl;
                     for(uint x = 0; x < X; x++) {
                         now = x + y * X;
-                        cout << weight[now] << "\t";
+                        cout << weight[now] << "(" << path[now] << ")" << "\t";
                     }
                     cout << endl;
                 }

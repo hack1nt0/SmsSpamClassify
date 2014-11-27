@@ -18,7 +18,7 @@ import com.xiaomi.smsspam.*;
 import com.xiaomi.smsspam.Utils.*;
 
 
-public class NewPhrase extends RulePrevious {
+public class NewPhrase extends Rule {
 
 
     private Map<String, PairCount>[] mFilteredPhrases; //the new-different-length phrase and its statistical info

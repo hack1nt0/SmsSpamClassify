@@ -1,7 +1,6 @@
 package com.xiaomi.smsspam.preprocess;
 
 import com.xiaomi.smsspam.Utils.Corpus;
-import com.xiaomi.smsspam.Utils.myWriter;
 
 import java.io.*;
 import java.util.*;
@@ -9,7 +8,7 @@ import java.util.*;
 /**
  * Created by root on 14-9-28.
  */
-public class Emoji extends RulePrevious {
+public class Emoji extends Rule {
     CombEmoji combEmoji;
     SingleEmoji singleEmoji;
     int singleEmojiN, combEmojiN;
@@ -33,8 +32,8 @@ public class Emoji extends RulePrevious {
     }
     public Emoji() {
         try {
-            extractedRulesOut = new myWriter(new FileOutputStream("data/extractedEmojis.txt"));
-            modelOut = new myWriter(new FileOutputStream("data/validEmojis.txt"));
+            extractedRulesOut = new PrintWriter(new FileOutputStream("data/extractedEmojis.txt"));
+            modelOut = new PrintWriter(new FileOutputStream("data/validEmojis.txt"));
             Emojis = new ArrayList<>();
             curEmojis = new ArrayList<>();
             singleEmoji = new SingleEmoji();
@@ -109,7 +108,7 @@ public class Emoji extends RulePrevious {
     @Override
     public void process(Corpus cps) {
         updRemainingBody(cps);
-        extractedRulesOut.write(curEmojis);
+        extractedRulesOut.println(curEmojis);
         cps.getX()[this.getStartIndex() + 0] = singleEmojiN > 0 ? 1 : 0;
         cps.getX()[this.getStartIndex() + 1] = combEmojiN > 0 ? 1 : 0;
     }
@@ -132,7 +131,7 @@ public class Emoji extends RulePrevious {
     }
 
     @Override
-    public String getName() {
+    public String toString() {
         return "Emoji";
     }
 

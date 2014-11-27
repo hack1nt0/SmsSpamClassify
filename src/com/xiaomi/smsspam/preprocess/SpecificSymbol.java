@@ -8,7 +8,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.*;
 
-public class SpecificSymbol extends RulePrevious {
+public class SpecificSymbol extends Rule {
 	
 	private int[][] mStatics = new int[Character.MAX_VALUE + 1][Utils.CLASS_COUNT];
     private Map<Character, Integer> symbols = new HashMap<>();
@@ -50,7 +50,7 @@ public class SpecificSymbol extends RulePrevious {
         double[] igs = new double[Character.MAX_VALUE + 1];
         double entropySpam = Utils.getEntropy(mTotal, mSpamCount);
         for(int i = 0; i < mStatics.length; ++i){
-            if(Word.getGlossary().containsKey("" + (char) i) || Numbers.isRegularNumber((char)i)){
+            if(Word.getGlossary().containsKey("" + (char) i)) { //Numbers.isRegularNumber((char)i)){//TODO
                 continue;
             }
             int hasCount = mStatics[i][Utils.SPAM] + mStatics[i][Utils.NORMAL];
@@ -95,7 +95,7 @@ public class SpecificSymbol extends RulePrevious {
     }
 
     @Override
-	public String getName() {
+	public String toString() {
 		return "SpecificSymbol";
 	}
 

@@ -109,7 +109,7 @@ namespace CppJieba
                     hmmRes.clear();
 
                     //let i jump over this piece
-                    i = j - 1; //TODO
+                    i = j - 1;
                 }
 
                 return true;
