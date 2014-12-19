@@ -16,18 +16,20 @@ public class NER extends Rule {
     private static final String TAG = "Program";
     SMSUnderstand nr;
     List<RecognitionResult> extractedNEs;
+    PrintWriter out;
 
     public NER() {
         if(!SMSUnderstand.initial()){
             return;
         }
         nr = new SMSUnderstand();
+        extractedNEs = new ArrayList<>();
         try {
-            extractedRulesOut = new PrintWriter(new FileOutputStream("data/extractedNEs.txt"));
-            extractedNEs = new ArrayList<>();
+            out = new PrintWriter(new FileOutputStream("data/extractedNEs.txt"));
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
+
     }
 
     public static void main(String[] args) throws Exception {
@@ -74,10 +76,11 @@ public class NER extends Rule {
         try {
             ArrayList<RecognitionResult> nes =nr.recognize(cps.getOriginalBody());
             extractedNEs = nes;
-            extractedRulesOut.println(extractedNEs);
+            out.println(extractedNEs);
             for (RecognitionResult n: nes) cps.getX()[this.getStartIndex() + n.getEntityType().ordinal()] = 1;
 
             List<String> remainBody = new ArrayList<>();
+            /*
             Collections.sort(extractedNEs, new Comparator<RecognitionResult>() {
                 @Override
                 public int compare(RecognitionResult o1, RecognitionResult o2) {
@@ -86,6 +89,7 @@ public class NER extends Rule {
                     return o1.getEndPosition() - o2.getEndPosition();
                 }
             });
+            */
             int len = cps.getOriginalBody().length();
             for (int i = 0, k = 0; i < len; ++i) {
                 int j = i;
@@ -132,8 +136,26 @@ public class NER extends Rule {
     }
 
     @Override
-    public int subClassCount() {
-        return 15;
+    public String[] getSubFeatureNames() {
+        return new String[]{"FasongNeirong",
+                "Chongzhi",
+                "RealNumber",
+                "TimeSpan",
+                "Flow",
+                "Money",
+                "BankCardNumber",
+                "ExpressNumber",
+                "PhoneNumber",
+                "URL",
+                "Time",
+                "VerificationCode",
+                "UnKnown",
+                "Drop"};
+    }
+
+    @Override
+    public String toString() {
+        return Arrays.asList(getSubFeatureNames()).toString();
     }
 
     @Override

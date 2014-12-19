@@ -305,8 +305,8 @@ public class NewPhrase extends Rule {
     }
 
     @Override
-    public int subClassCount() {
-        return 0;
+    public String[] getSubFeatureNames() {
+        return new String[0];
     }
 
     @Override

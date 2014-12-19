@@ -4,9 +4,7 @@ import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 import com.xiaomi.smsspam.Utils.Corpus;
 import com.xiaomi.smsspam.preprocess.Word;
@@ -44,6 +42,7 @@ public class MainClass {
     }
 
     public static void main(String[] args) {
+
         List<Corpus> trainData = readSMS("data/all_processed.txt.dist.filtled");
         //cross validation
         if(Options.TEST_ALG) {
@@ -56,8 +55,8 @@ public class MainClass {
         RuleManager ruleManager = new RuleManager();
         ruleManager.train(trainData);
         ruleManager.process(trainData);
-        Classifier NB = new NaiveBayes();
-        NB.train(trainData);
+        Classifier nbc = new NaiveBayes();
+        nbc.train(trainData);
         MainClass.log("Training");
 
         int normalMiss = 0;
@@ -68,7 +67,7 @@ public class MainClass {
         for(int i = 0; i < testData.size(); i++) {
             Corpus cps = testData.get(i);
             ruleManager.process(cps);
-            boolean b = NB.classify(cps);
+            boolean b = nbc.classify(cps);
             if(cps.getIsSpam()) {
                 if(b){ spamHit++; }
                 else{ spamMiss++; }

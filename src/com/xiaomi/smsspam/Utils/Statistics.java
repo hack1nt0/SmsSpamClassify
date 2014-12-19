@@ -12,6 +12,10 @@ public class Statistics {
         return getEntropy(cpss, X) + getEntropy(cpss, Y) - getEntropy(cpss, X, Y);
     }
 
+    public static double getMI(List<Corpus> cpss, String X, int Y) {
+        return getEntropy(cpss, X) + getEntropy(cpss, Y) - getEntropy(cpss, X, Y);
+    }
+
     public static double getIG(List<Corpus> cpss, int X, int Y) {
         return getMI(cpss, X, Y);
     }
@@ -44,6 +48,38 @@ public class Statistics {
         }
         return -res;
     }
+
+    public static double getEntropy(List<Corpus> cpss, String token) {
+        Map<Long, Double> P = new HashMap<>();
+        for (Corpus cps: cpss) {
+            long id = 0;
+            if (cps.containsToken(token)) id += 1L << 0;
+            P.put(id, P.containsKey(id) ? P.get(id) + 1 : 1);
+        }
+        double res = 0.0;
+        for (Long xs: P.keySet()) {
+            P.put(xs, P.get(xs) / cpss.size());
+            res += P.get(xs) * Math.log(P.get(xs)) / Math.log(2);
+        }
+        return -res;
+    }
+
+    public static double getEntropy(List<Corpus> cpss, String token, int Y) {
+        Map<Long, Double> P = new HashMap<>();
+        for (Corpus cps: cpss) {
+            long id = 0;
+            if (cps.getTokens().indexOf(token) != -1) id += 1L << 1;
+            if (cps.getX()[Y] > 0) id += 1L << 0;
+            P.put(id, P.containsKey(id) ? P.get(id) + 1 : 1);
+        }
+        double res = 0.0;
+        for (Long xs: P.keySet()) {
+            P.put(xs, P.get(xs) / cpss.size());
+            res += P.get(xs) * Math.log(P.get(xs)) / Math.log(2);
+        }
+        return -res;
+    }
+
 
     public static double getCondEntropy(int X, int Y, List<Corpus> cpss) {
         return getEntropy(cpss, X) - getMI(cpss, X, Y);

@@ -28,12 +28,13 @@ public class Url extends Rule {
     private List<String> URLs;
     private List<String> curURLs;
 
+    private PrintWriter tmpOut, modelOut;
+
     public Url(){
         curURLs = new ArrayList<>();
         URLs = new ArrayList<>();
         try {
-            extractedRulesOut = new PrintWriter(new FileOutputStream("data/extractedURLs.txt"));
-            modelOut = new PrintWriter(new FileOutputStream("data/validURLs.txt"));
+            tmpOut = new PrintWriter(new FileOutputStream("data/extractedURLs.txt"));
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -113,13 +114,13 @@ public class Url extends Rule {
     public void train(List<Corpus> cpss) {
         for (Corpus cps: cpss)
             updRemainingBody(cps);
-        //TODO writeCurRules(modelOut, URLs);
+        //modelOut = new PrintWriter(new FileOutputStream("data/validURLs.txt"));
     }
 
     public void process(Corpus cps) {
         updRemainingBody(cps);
         //TODO writeCurRules(extractedRulesOut, curURLs);
-        extractedRulesOut.println(curURLs);
+        tmpOut.println(curURLs);
         cps.getX()[this.getStartIndex()] = URLs.size() > 0 ? 1 : 0;
     }
     
@@ -138,8 +139,8 @@ public class Url extends Rule {
     }
 
     @Override
-    public int subClassCount() {
-        return 1;
+    public String[] getSubFeatureNames() {
+        return new String[]{"has-url"};
     }
 
 

@@ -2,12 +2,13 @@ package com.xiaomi.smsspam.preprocess;
 
 import com.xiaomi.smsspam.Utils.Corpus;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class RuleManager {
 
-    private static int ruleCnt;
-    private Rule[] rules = {
+    private int ruleCnt;
+    private static Rule[] rules = {
             new Y(),
             new NER(),
            //new Bracket(),
@@ -21,14 +22,32 @@ public class RuleManager {
             //new SmsLength(),
     };
 
+    public static List<String> getRuleNames() {
+        List<String> ret = new ArrayList<>();
+        for (Rule r: rules) {
+            if (r instanceof Word) continue;
+            for (String n : r.getSubFeatureNames()) ret.add(n);
+        }
+        return ret;
+    }
+
+    public int getFeatureCnt() {
+        return ruleCnt;
+    }
+
     public RuleManager(){
+        for(int i = 0; i < rules.length; ++i){
+            rules[i].reset();
+            rules[i].setStartIndex(ruleCnt);
+            ruleCnt += rules[i].getSubFeatureCnt();
+        }
     }
 
     public Rule[] getRules() {
         return rules;
     }
 
-    public static int getRuleCnt(){
+    public int getRuleCnt(){
         return ruleCnt;
     }
 
@@ -37,13 +56,13 @@ public class RuleManager {
         for(int i = 0; i < rules.length; ++i){
             rules[i].reset();
             rules[i].train(cpss);
-            rules[i].setStartIndex(ruleCnt);
-            ruleCnt += rules[i].subClassCount();
+            //rules[i].setStartIndex(ruleCnt);
+            //ruleCnt += rules[i].getSubFeatureCnt();
         }
     }
 
     public void process(Corpus cps) {
-        //cps.reset();
+        cps.reset();
         cps.setX(new int[getRuleCnt()]);//TODO
         for (int i = 0; i < rules.length; ++i) {
             rules[i].reset();

@@ -28,12 +28,13 @@ public class Y extends Rule {
     }
 
     @Override
-    public int subClassCount() {
-        return 1;
+    public String[] getSubFeatureNames() {
+        return new String[]{"ispam"};
     }
 
     @Override
     public void train(List<Corpus> cpss) {
+        for (Corpus cps: cpss) cps.getX()[0] = cps.getIsSpam() ? 1 : 0;
     }
 
     @Override

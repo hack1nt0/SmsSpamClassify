@@ -4,7 +4,10 @@ public class Options {
     public static int SPAM = 0;
     public static int NORMAL = 1;
 
+    public static enum Model{BINOMIAL, MULTINOMIAL}
+
     public static final String PATH = "/home/qinqiuping/nt/files/spamsms/version2/";
+
     public static final String FilePath = "/home/wangsirui/workspace/merged_2_C_C_C .json";
 
     public static final int CROSS_COUNT = 10;

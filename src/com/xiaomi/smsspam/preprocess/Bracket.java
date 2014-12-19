@@ -46,8 +46,8 @@ public class Bracket extends Rule {
     private List<Map.Entry<String, Double>> Hs;
 
     @Override
-    public int subClassCount() {
-        return validBrackets.size();
+    public String[] getSubFeatureNames() {
+        return new String[]{"bound-brackets"};
     }
 
     @Override

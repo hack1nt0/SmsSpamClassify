@@ -15,6 +15,7 @@ public class Emoji extends Rule {
     List<String> Emojis;
     private List<String> curEmojis;
 
+    PrintWriter extractedRulesOut;
 
     class Range implements Comparable<Range> {
         int l, r;
@@ -33,7 +34,6 @@ public class Emoji extends Rule {
     public Emoji() {
         try {
             extractedRulesOut = new PrintWriter(new FileOutputStream("data/extractedEmojis.txt"));
-            modelOut = new PrintWriter(new FileOutputStream("data/validEmojis.txt"));
             Emojis = new ArrayList<>();
             curEmojis = new ArrayList<>();
             singleEmoji = new SingleEmoji();
@@ -94,8 +94,8 @@ public class Emoji extends Rule {
     }
 
     @Override
-    public int subClassCount() {
-        return 2;
+    public String[] getSubFeatureNames() {
+        return new String[]{"single-emoji", "combined-emoji"};
     }
 
     @Override

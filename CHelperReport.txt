@@ -1,2 +1,2 @@
-28 src/TC/EllysCandyGame.tctask
+23 src/TC/TallShoes.tctask
 0

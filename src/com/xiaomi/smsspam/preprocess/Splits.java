@@ -17,17 +17,17 @@ public class Splits extends Rule {
 
     private List<String> curSplits;
     private List<String> validSplits; //TODO
+    PrintWriter tmpOut, modelOut;
 
     public Splits() {
         try {
-            extractedRulesOut = new PrintWriter(new FileOutputStream("data/extractedSplits.txt"));
-            modelOut = new PrintWriter(new FileOutputStream("data/validSplits.txt"));
+            tmpOut = new PrintWriter(new FileOutputStream("data/extractedSplits.txt"));
         } catch (IOException e) {
             e.printStackTrace();
         }
         curSplits = new ArrayList<>();
         validSplits = new ArrayList<>();
-        REs = new String[]{"( ){3,}", "(\\t){1,}", "([\\n\\r])+"};
+        REs = new String[]{"( ){3,}", "(\\t ){1,}", "([\\n\\r])+"};
         autoMachine = new Pattern[REs.length];
         for (int i = 0; i < autoMachine.length; ++i) autoMachine[i] = Pattern.compile(REs[i]);
         hits = new int[REs.length];
@@ -65,12 +65,12 @@ public class Splits extends Rule {
             cps.getX()[this.getStartIndex() + i] = hits[i] > 0 ? 1 : 0;
         }
 
-        extractedRulesOut.println(curSplits);
+        tmpOut.println(curSplits);
     }
 
     @Override
-    public int subClassCount() {
-        return REs.length;
+    public String[] getSubFeatureNames() {
+        return REs;
     }
 
     @Override
@@ -88,11 +88,13 @@ public class Splits extends Rule {
                 cps.setRemainingBody(nsegs);
             }
         }
+        //modelOut = new PrintWriter(new FileOutputStream("data/validSplits.txt"));
+
     }
 
     @Override
 	public String toString() {
-		return "TabsSerial";
+		return "Splits";
 	}
 
 	@Override

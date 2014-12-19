@@ -18,20 +18,8 @@ public class SpecificSymbol extends Rule {
     private static final double MIN_IG = 0.004;
 
     @Override
-    public int subClassCount(){
-        return symbols.size();
-    }
-
-    @Override
-    public String getClassName(int i){
-        if(i < subClassCount() && i >= 0){
-            String name = super.getClassName(getClass());
-            name += "_";
-            name += symbols.get(i);
-            return padding(name);
-        }else{
-            return null;
-        }
+    public String[] getSubFeatureNames() {
+        return symbols.keySet().toArray(new String[0]);
     }
 
     @Override

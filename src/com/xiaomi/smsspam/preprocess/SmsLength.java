@@ -13,8 +13,8 @@ public class SmsLength extends Rule {
     int len1; //[len0=0, len1, len2=MAXLEN]
 
     @Override
-    public int subClassCount() {
-        return 1;
+    public String[] getSubFeatureNames() {
+        return new String[]{"smsLength>=" + len1};
     }
 
     @Override
